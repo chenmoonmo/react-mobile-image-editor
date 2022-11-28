@@ -5,9 +5,9 @@ import EditorContext from '../../utils/context/EditorContext';
 
 const ToolNames = ['Pencil', 'Words', 'Cut', 'Blur', 'Recall'] as const;
 
-export type ToolUnio = typeof ToolNames[number];
+export type ToolUnion = typeof ToolNames[number];
 
-const ToolsMap: { icon: string; name: ToolUnio }[] = [
+const ToolsMap: { icon: string; name: ToolUnion }[] = [
   { icon: '', name: 'Pencil' },
   { icon: '', name: 'Words' },
   { icon: '', name: 'Cut' },

@@ -1,9 +1,9 @@
 import React from 'react';
-import { ToolUnio } from '../constants';
+import { ToolUnion } from '../constants';
 
 export interface IEditorContext {
-  activeTool: null | ToolUnio;
-  handleSelectTool: (tool: ToolUnio) => void;
+  activeTool: null | ToolUnion;
+  handleSelectTool: (tool: ToolUnion) => void;
 }
 
 const EditorContext = React.createContext<IEditorContext>({
