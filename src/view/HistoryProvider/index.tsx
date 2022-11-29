@@ -17,6 +17,7 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children }) => {
   ) => {
     console.log('historyChange', state);
     setLines(state.lines);
+    setTexts(state.texts);
   };
 
   const history = useRef<History>();
@@ -28,6 +29,17 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children }) => {
       lines: callback(lines),
       image,
       texts,
+      blurs,
+    });
+  };
+
+  const handleTextChange = (
+    callback: (texts: HistoryContextType['texts']) => HistoryContextType['texts']
+  ) => {
+    history.current?.push({
+      lines,
+      image,
+      texts: callback(texts),
       blurs,
     });
   };
@@ -61,6 +73,7 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children }) => {
         texts,
         blurs,
         setLines: handleLineChange,
+        setTexts: handleTextChange,
         redo: handleRedo,
         undo: handleUndo,
       }}

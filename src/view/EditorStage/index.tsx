@@ -1,4 +1,4 @@
-import { Layer, Stage, Line, Image } from 'react-konva';
+import { Layer, Stage, Line, Image, Text } from 'react-konva';
 
 import React, { ComponentType, useRef } from 'react';
 import Konva from 'konva';
@@ -12,8 +12,8 @@ type EditorProps = {
 };
 
 const EditorStage: ComponentType<EditorProps> = ({ image }) => {
-  const { activeTool, pencilConfig } = useEditor();
-  const { lines, setLines } = useHistory();
+  const { width, height, activeTool, pencilConfig } = useEditor();
+  const { texts, lines, setLines } = useHistory();
 
   const stage = useRef<Konva.Stage>(null);
   const layer = useRef<Konva.Layer>(null);
@@ -111,8 +111,12 @@ const EditorStage: ComponentType<EditorProps> = ({ image }) => {
   return (
     <Stage
       ref={stage}
-      width={window.innerWidth}
-      height={window.innerHeight}
+      width={width}
+      height={height}
+      style={{
+        width: '100%',
+        height: '100%',
+      }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       onMouseMove={handleMouseMove}
@@ -123,13 +127,16 @@ const EditorStage: ComponentType<EditorProps> = ({ image }) => {
       <Layer ref={layer}>
         {/* TODO: 计算图片尺寸 */}
         <Image image={mainImage} width={window.innerWidth} height={window.innerHeight} />
-        {lines.map((item, index) => (
+        {texts.map((text, index) => (
+          <Text key={index} draggable {...text} />
+        ))}
+        {lines.map((line, index) => (
           <Line
             key={index}
             ref={(ref) => {
               lineRefs.current[index] = ref as Konva.Line;
             }}
-            {...item}
+            {...line}
           />
         ))}
       </Layer>

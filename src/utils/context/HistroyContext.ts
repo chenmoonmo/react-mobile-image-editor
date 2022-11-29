@@ -1,6 +1,5 @@
 import Konva from 'konva';
 import React from 'react';
-import { History } from 'stateshot';
 
 export type HistoryContextType = {
   image: {
@@ -14,6 +13,9 @@ export type HistoryContextType = {
   setLines: (
     callback: (lines: HistoryContextType['lines']) => HistoryContextType['lines']
   ) => unknown;
+  setTexts:  (
+    callback: (texts: HistoryContextType['texts']) => HistoryContextType['texts']
+  ) => unknown;
   redo: () => unknown;
   undo: () => unknown;
 };
@@ -24,6 +26,7 @@ const EditorContext = React.createContext<HistoryContextType>({
   lines: [],
   blurs: [],
   setLines: () => {},
+  setTexts: () => {},
   redo: () => {},
   undo: () => {},
 });

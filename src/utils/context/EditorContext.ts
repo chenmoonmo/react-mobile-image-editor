@@ -1,22 +1,32 @@
 import React from 'react';
-import { ToolUnion, PencilConfig } from '../constants';
+import { ToolUnion, PencilConfig, TextConfig } from '../constants';
 
 export type EditorContextType = {
+  width: number;
+  height: number;
+
   activeTool: null | ToolUnion;
-  handleSelectTool: (tool: ToolUnion) => void;
+  handleSelectTool: (tool: ToolUnion | null) => void;
 
   pencilConfig: PencilConfig;
-  setPencilConfig: (config: PencilConfig) => void;
+  changeColor: (color: string) => void;
 
   editorColors?: string[];
-}
+  textConfig: TextConfig;
+};
 
 const EditorContext = React.createContext<EditorContextType>({
+  width: 0,
+  height: 0,
   pencilConfig: {
     stroke: '#df4b26',
     strokeWidth: 5,
     lineCap: 'round',
     lineJoin: 'round',
+  },
+  textConfig: {
+    fill: '#df4b26',
+    fontSize: 30,
   },
   editorColors: [
     '#FF2A1A',
@@ -29,7 +39,7 @@ const EditorContext = React.createContext<EditorContextType>({
     '#24A8D0',
   ],
   activeTool: null,
-  setPencilConfig: () => {},
+  changeColor: () => {},
   handleSelectTool: () => {},
 });
 
