@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import EditorStage from './view/EditorStage';
+import Editor from './view/Editor';
+import image from './image.jpg'
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
-root.render(<EditorStage/>);
+root.render(<Editor image={image}/>);
