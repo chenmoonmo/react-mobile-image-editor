@@ -1,13 +1,14 @@
 import { css } from '@emotion/react';
 import styled from '@emotion/styled';
-import React, { ComponentType, ReactNode, useContext, useMemo } from 'react';
-import EditorContext from 'utils/context/EditorContext';
+import React, { ComponentType, ReactNode, useMemo } from 'react';
 
 import { ReactComponent as IconPencil } from 'assets/icons/icon-pencil.svg';
 import { ReactComponent as IconWords } from 'assets/icons/icon-words.svg';
 import { ReactComponent as IconCut } from 'assets/icons/icon-cut.svg';
 import { ReactComponent as IconBlur } from 'assets/icons/icon-blur.svg';
 import { ReactComponent as IconRecall } from 'assets/icons/icon-recall.svg';
+import useEditor from 'utils/hooks/useEditor';
+import useHistory from 'utils/hooks/useHistory';
 
 const ToolNames = ['Pencil', 'Words', 'Cut', 'Blur', 'Recall'] as const;
 
@@ -22,8 +23,8 @@ const ToolsMap: { icon: ReactNode; name: ToolUnion }[] = [
 ];
 
 const Toolbar: ComponentType = () => {
-  const { activeTool, pencilConfig, editorColors, handleSelectTool, setPencilConfig } =
-    useContext(EditorContext);
+  const { activeTool, pencilConfig, editorColors, handleSelectTool, setPencilConfig } = useEditor();
+  const { redo, undo } = useHistory();
 
   const isColorSelectorShow = useMemo(() => {
     return ['Pencil', 'Words'].includes(activeTool!);
@@ -105,6 +106,16 @@ const Toolbar: ComponentType = () => {
     padding: 0 30px;
   `;
 
+  const handleToolSelect = (tool: ToolUnion) => {
+    switch (tool) {
+      case 'Recall':
+        undo();
+        break;
+      default:
+        handleSelectTool(tool);
+    }
+  };
+
   return (
     <ToolContainer>
       {isColorSelectorShow && (
@@ -122,7 +133,7 @@ const Toolbar: ComponentType = () => {
         {ToolsMap.map((tool) => (
           <ToolbarItem
             key={tool.name}
-            onClick={() => handleSelectTool(tool.name)}
+            onClick={() => handleToolSelect(tool.name)}
             isActive={tool.name === activeTool}
           >
             {tool.icon}

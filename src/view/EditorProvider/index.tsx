@@ -6,6 +6,7 @@ type EditorProviderProps = {
   children: ReactNode;
   editorColors?: string[];
 };
+
 const EditorProvider: ComponentType<EditorProviderProps> = ({
   children,
   editorColors = [

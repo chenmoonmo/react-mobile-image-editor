@@ -1,7 +1,7 @@
 import React from 'react';
 import { ToolUnion, PencilConfig } from '../constants';
 
-export interface IEditorContext {
+export type EditorContextType = {
   activeTool: null | ToolUnion;
   handleSelectTool: (tool: ToolUnion) => void;
 
@@ -11,7 +11,7 @@ export interface IEditorContext {
   editorColors?: string[];
 }
 
-const EditorContext = React.createContext<IEditorContext>({
+const EditorContext = React.createContext<EditorContextType>({
   pencilConfig: {
     stroke: '#df4b26',
     strokeWidth: 5,

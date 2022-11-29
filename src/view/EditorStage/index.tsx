@@ -1,80 +1,62 @@
 import { Layer, Stage, Line, Image } from 'react-konva';
 
-import EditorContext from 'utils/context/EditorContext';
-import React, { ComponentType, useContext, useRef, useState } from 'react';
+import React, { ComponentType, useRef } from 'react';
 import Konva from 'konva';
 
-import cloneDeep from 'lodash/cloneDeep';
 import useImage from 'use-image';
+import useEditor from 'utils/hooks/useEditor';
+import useHistory from 'utils/hooks/useHistory';
 
 type EditorProps = {
   image: string;
 };
 
 const EditorStage: ComponentType<EditorProps> = ({ image }) => {
-  const { activeTool, pencilConfig } = useContext(EditorContext);
+  const { activeTool, pencilConfig } = useEditor();
+  const { lines, setLines } = useHistory();
+
   const stage = useRef<Konva.Stage>(null);
-  const [mainImage] = useImage(image);
+  const layer = useRef<Konva.Layer>(null);
 
-  const [lines, setLines] = useState<Array<Konva.LineConfig & { isPaint: boolean }>>([]);
-
+  const currentLine = useRef<Konva.Line | null>(null);
   const lineRefs = useRef<Konva.Line[]>([]);
+
+  const [mainImage] = useImage(image);
 
   const handleDrawStart = () => {
     const pos = stage.current?.getPointerPosition();
+    currentLine.current = new Konva.Line({
+      ...pencilConfig,
+      points: pos ? [pos.x, pos.y, pos.x, pos.y] : [],
+    });
+    layer.current?.add(currentLine.current);
+  };
+
+  const handleDraw = () => {
+    const lastLine = currentLine.current;
+    if (lastLine === null) {
+      return;
+    }
+    const pos = stage.current?.getPointerPosition()!;
+    const newPoints = lastLine.points().concat([pos.x, pos.y]);
+    lastLine.points(newPoints);
+  };
+
+  const handleDrawEnd = () => {
+    const lastLine = currentLine.current;
     setLines((preLines) => {
-      preLines = cloneDeep(preLines);
       return [
         ...preLines,
         {
           ...pencilConfig,
-          globalCompositeOperation: 'source-over',
-          isPaint: true,
-          points: pos ? [pos.x, pos.y, pos.x, pos.y] : [],
+          points: lastLine?.points(),
         },
       ];
     });
-  };
-
-  const handleDraw = () => {
-    if (!lines.at(-1)?.isPaint) {
-      return;
-    }
-    const pos = stage.current?.getPointerPosition()!;
-    const lastLine = lineRefs.current.at(-1)!;
-    const newPoints = lastLine.points().concat([pos.x, pos.y]);
-    lastLine.points(newPoints);
-    setLines((preLines) => {
-      preLines = cloneDeep(preLines);
-      const currentLine = preLines.pop();
-      if (currentLine) {
-        return [
-          ...preLines,
-          {
-            ...currentLine,
-            points: newPoints,
-          },
-        ];
-      }
-      return preLines;
-    });
-  };
-
-  const handleDrawEnd = () => {
-    setLines((preLines) => {
-      preLines = cloneDeep(preLines);
-      const currentLine = preLines.pop();
-      if (currentLine) {
-        return [
-          ...preLines,
-          {
-            ...currentLine,
-            isPaint: false,
-          },
-        ];
-      }
-      return preLines;
-    });
+    setTimeout(() => {
+      currentLine.current?.destroy();
+      currentLine.current = null;
+    }, 50);
   };
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -101,6 +83,7 @@ const EditorStage: ComponentType<EditorProps> = ({ image }) => {
         break;
     }
   };
+
   const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
     switch (activeTool) {
@@ -137,7 +120,7 @@ const EditorStage: ComponentType<EditorProps> = ({ image }) => {
       onMouseUp={handleMouseUp}
       onTouchEnd={handleTouchEnd}
     >
-      <Layer>
+      <Layer ref={layer}>
         {/* TODO: 计算图片尺寸 */}
         <Image image={mainImage} width={window.innerWidth} height={window.innerHeight} />
         {lines.map((item, index) => (

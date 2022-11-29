@@ -1,6 +1,7 @@
 import { ComponentType } from 'react';
 import EditorProvider from 'view/EditorProvider';
 import EditorStage from 'view/EditorStage';
+import HistoryProvider from 'view/HistoryProvider';
 import Toolbar from 'view/Toolbar';
 
 type EditorProps = {
@@ -10,8 +11,10 @@ type EditorProps = {
 const Editor: ComponentType<EditorProps> = ({ image }) => {
   return (
     <EditorProvider>
-      <EditorStage image={image} />
-      <Toolbar />
+      <HistoryProvider>
+        <EditorStage image={image} />
+        <Toolbar />
+      </HistoryProvider>
     </EditorProvider>
   );
 };
