@@ -1,6 +1,6 @@
 import { Layer, Stage, Line, Image, Text } from 'react-konva';
 
-import React, { ComponentType, useRef } from 'react';
+import React, { ComponentType, useEffect, useMemo, useRef } from 'react';
 import Konva from 'konva';
 
 import useImage from 'use-image';
@@ -11,9 +11,29 @@ type EditorProps = {
   image: string;
 };
 
-const EditorStage: ComponentType<EditorProps> = ({ image }) => {
+const getImageSize = (imageWidth: number, imageHeight: number, width: number, height: number) => {
+  if (imageWidth < imageHeight && width < height) {
+    return [width, (imageWidth / imageHeight) * height];
+  }
+
+  if (imageWidth < imageHeight && width > height) {
+    return [(height / width) * imageWidth, height];
+  }
+
+  if (imageWidth > imageHeight && width > height) {
+    return [(imageWidth / imageHeight) * height, height];
+  }
+
+  if (imageWidth > imageHeight && width < height) {
+    return [width, (imageHeight / imageWidth) * width];
+  }
+
+  return [0, 0];
+};
+
+const EditorStage: ComponentType<EditorProps> = ({ image: imageUrl }) => {
   const { width, height, activeTool, pencilConfig } = useEditor();
-  const { texts, lines, setLines } = useHistory();
+  const { image, texts, lines, setLines, setImage } = useHistory();
 
   const stage = useRef<Konva.Stage>(null);
   const layer = useRef<Konva.Layer>(null);
@@ -21,7 +41,7 @@ const EditorStage: ComponentType<EditorProps> = ({ image }) => {
   const currentLine = useRef<Konva.Line | null>(null);
   const lineRefs = useRef<Konva.Line[]>([]);
 
-  const [mainImage] = useImage(image);
+  const [mainImage] = useImage(imageUrl);
 
   const handleDrawStart = () => {
     const pos = stage.current?.getPointerPosition();
@@ -108,6 +128,28 @@ const EditorStage: ComponentType<EditorProps> = ({ image }) => {
     }
   };
 
+  useEffect(() => {
+    if (mainImage) {
+      const [imageWidth, imageHeight] = getImageSize(
+        mainImage.width,
+        mainImage.height,
+        width,
+        height
+      );
+      const x = (width - imageWidth) / 2;
+      const y = (height - imageHeight) / 2;
+      setImage(() => {
+        return {
+          image: mainImage,
+          width: imageWidth,
+          height: imageHeight,
+          x,
+          y,
+        };
+      });
+    }
+  }, [mainImage]);
+
   return (
     <Stage
       ref={stage}
@@ -126,7 +168,8 @@ const EditorStage: ComponentType<EditorProps> = ({ image }) => {
     >
       <Layer ref={layer}>
         {/* TODO: 计算图片尺寸 */}
-        <Image image={mainImage} width={window.innerWidth} height={window.innerHeight} />
+        {image.image && <Image draggable={activeTool === null} {...image} />}
+
         {texts.map((text, index) => (
           <Text key={index} draggable {...text} />
         ))}

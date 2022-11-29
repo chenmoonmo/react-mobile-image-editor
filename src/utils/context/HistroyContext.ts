@@ -3,6 +3,7 @@ import React from 'react';
 
 export type HistoryContextType = {
   image: {
+    image: any;
     width?: number;
     height?: number;
     position?: number;
@@ -13,20 +14,26 @@ export type HistoryContextType = {
   setLines: (
     callback: (lines: HistoryContextType['lines']) => HistoryContextType['lines']
   ) => unknown;
-  setTexts:  (
+  setTexts: (
     callback: (texts: HistoryContextType['texts']) => HistoryContextType['texts']
+  ) => unknown;
+  setImage: (
+    callback: (texts: HistoryContextType['image']) => HistoryContextType['image']
   ) => unknown;
   redo: () => unknown;
   undo: () => unknown;
 };
 
 const EditorContext = React.createContext<HistoryContextType>({
-  image: {},
+  image: {
+    image: ''
+  },
   texts: [],
   lines: [],
   blurs: [],
   setLines: () => {},
   setTexts: () => {},
+  setImage: () => {},
   redo: () => {},
   undo: () => {},
 });
