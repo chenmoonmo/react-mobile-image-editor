@@ -1,9 +1,7 @@
 import { Layer, Stage, Line, Image, Text } from 'react-konva';
 
-import React, { ComponentType, useEffect, useMemo, useRef } from 'react';
+import React, { ComponentType, useRef } from 'react';
 import Konva from 'konva';
-
-import useImage from 'use-image';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 
@@ -11,45 +9,25 @@ type EditorProps = {
   image: string;
 };
 
-const getImageSize = (imageWidth: number, imageHeight: number, width: number, height: number) => {
-  if (imageWidth < imageHeight && width < height) {
-    return [width, (imageWidth / imageHeight) * height];
-  }
-
-  if (imageWidth < imageHeight && width > height) {
-    return [(height / width) * imageWidth, height];
-  }
-
-  if (imageWidth > imageHeight && width > height) {
-    return [(imageWidth / imageHeight) * height, height];
-  }
-
-  if (imageWidth > imageHeight && width < height) {
-    return [width, (imageHeight / imageWidth) * width];
-  }
-
-  return [0, 0];
-};
-
-const EditorStage: ComponentType<EditorProps> = ({ image: imageUrl }) => {
+const EditorStage: ComponentType<EditorProps> = () => {
   const { width, height, activeTool, pencilConfig } = useEditor();
   const { image, texts, lines, setLines, setImage } = useHistory();
 
   const stage = useRef<Konva.Stage>(null);
   const layer = useRef<Konva.Layer>(null);
-
+  const currentImage = useRef<Konva.Image | null>(null);
   const currentLine = useRef<Konva.Line | null>(null);
-  const lineRefs = useRef<Konva.Line[]>([]);
-
-  const [mainImage] = useImage(imageUrl);
 
   const handleDrawStart = () => {
-    const pos = stage.current?.getPointerPosition();
-    currentLine.current = new Konva.Line({
-      ...pencilConfig,
-      points: pos ? [pos.x, pos.y, pos.x, pos.y] : [],
-    });
-    layer.current?.add(currentLine.current);
+    const pos = stage.current?.getPointerPosition()!;
+    const currentBG = stage.current?.getIntersection(pos);
+    if (currentBG && currentBG !== currentLine.current) {
+      currentLine.current = new Konva.Line({
+        ...pencilConfig,
+        points: pos ? [pos.x, pos.y, pos.x, pos.y] : [],
+      });
+      layer.current?.add(currentLine.current);
+    }
   };
 
   const handleDraw = () => {
@@ -58,8 +36,11 @@ const EditorStage: ComponentType<EditorProps> = ({ image: imageUrl }) => {
       return;
     }
     const pos = stage.current?.getPointerPosition()!;
-    const newPoints = lastLine.points().concat([pos.x, pos.y]);
-    lastLine.points(newPoints);
+    const currentBG = stage.current?.getIntersection(pos);
+    if (currentBG && currentBG !== currentLine.current) {
+      const newPoints = lastLine.points().concat([pos.x, pos.y]);
+      lastLine.points(newPoints);
+    }
   };
 
   const handleDrawEnd = () => {
@@ -128,28 +109,6 @@ const EditorStage: ComponentType<EditorProps> = ({ image: imageUrl }) => {
     }
   };
 
-  useEffect(() => {
-    if (mainImage) {
-      const [imageWidth, imageHeight] = getImageSize(
-        mainImage.width,
-        mainImage.height,
-        width,
-        height
-      );
-      const x = (width - imageWidth) / 2;
-      const y = (height - imageHeight) / 2;
-      setImage(() => {
-        return {
-          image: mainImage,
-          width: imageWidth,
-          height: imageHeight,
-          x,
-          y,
-        };
-      });
-    }
-  }, [mainImage]);
-
   return (
     <Stage
       ref={stage}
@@ -158,6 +117,7 @@ const EditorStage: ComponentType<EditorProps> = ({ image: imageUrl }) => {
       style={{
         width: '100%',
         height: '100%',
+        background: '#000',
       }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
@@ -168,19 +128,12 @@ const EditorStage: ComponentType<EditorProps> = ({ image: imageUrl }) => {
     >
       <Layer ref={layer}>
         {/* TODO: 计算图片尺寸 */}
-        {image.image && <Image draggable={activeTool === null} {...image} />}
-
+        <Image ref={currentImage} {...image} />
         {texts.map((text, index) => (
           <Text key={index} draggable {...text} />
         ))}
         {lines.map((line, index) => (
-          <Line
-            key={index}
-            ref={(ref) => {
-              lineRefs.current[index] = ref as Konva.Line;
-            }}
-            {...line}
-          />
+          <Line key={index} {...line} />
         ))}
       </Layer>
     </Stage>

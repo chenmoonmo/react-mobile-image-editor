@@ -6,7 +6,8 @@ export type HistoryContextType = {
     image: any;
     width?: number;
     height?: number;
-    position?: number;
+    x?: number;
+    y?:number;
   };
   texts: Konva.TextConfig[];
   lines: Konva.LineConfig[];

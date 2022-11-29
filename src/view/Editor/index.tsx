@@ -15,7 +15,7 @@ type EditorProps = {
 const Editor: ComponentType<EditorProps> = ({ image, width, height }) => {
   return (
     <EditorProvider width={width} height={height}>
-      <HistoryProvider>
+      <HistoryProvider  image={image}> 
         <WordInputProvider>
           <EditorStage image={image} />
           <Toolbar />
