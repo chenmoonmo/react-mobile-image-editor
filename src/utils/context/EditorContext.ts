@@ -27,6 +27,7 @@ const EditorContext = React.createContext<EditorContextType>({
   textConfig: {
     fill: '#df4b26',
     fontSize: 30,
+    width: 300
   },
   editorColors: [
     '#FF2A1A',

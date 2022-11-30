@@ -4,10 +4,34 @@ import React, { ComponentType, useRef } from 'react';
 import Konva from 'konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
+import styled from '@emotion/styled';
 
 type EditorProps = {
   image: string;
 };
+
+const StageContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  &::before,
+  &::after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    content: '';
+    display: block;
+    width: 100%;
+    height: 180px;
+    background: linear-gradient(180deg, rgba(34, 34, 34, 0.94) 0%, rgba(71, 71, 71, 0) 100%);
+  }
+  &::after {
+    top: unset;
+    bottom: 0;
+    height: 180px;
+    background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);
+  }
+`;
 
 const EditorStage: ComponentType<EditorProps> = () => {
   const { width, height, activeTool, pencilConfig } = useEditor();
@@ -110,33 +134,30 @@ const EditorStage: ComponentType<EditorProps> = () => {
   };
 
   return (
-    <Stage
-      ref={stage}
-      width={width}
-      height={height}
-      style={{
-        width: '100%',
-        height: '100%',
-        background: '#000',
-      }}
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
-      onMouseMove={handleMouseMove}
-      onTouchMove={handleTouchMove}
-      onMouseUp={handleMouseUp}
-      onTouchEnd={handleTouchEnd}
-    >
-      <Layer ref={layer}>
-        {/* TODO: 计算图片尺寸 */}
-        <Image ref={currentImage} {...image} />
-        {texts.map((text, index) => (
-          <Text key={index} draggable {...text} />
-        ))}
-        {lines.map((line, index) => (
-          <Line key={index} {...line} />
-        ))}
-      </Layer>
-    </Stage>
+    <StageContainer>
+      <Stage
+        ref={stage}
+        width={width}
+        height={height}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onMouseMove={handleMouseMove}
+        onTouchMove={handleTouchMove}
+        onMouseUp={handleMouseUp}
+        onTouchEnd={handleTouchEnd}
+      >
+        <Layer ref={layer}>
+          {/* TODO: 计算图片尺寸 */}
+          <Image ref={currentImage} {...image} />
+          {texts.map((text, index) => (
+            <Text key={index} draggable {...text} />
+          ))}
+          {lines.map((line, index) => (
+            <Line key={index} {...line} />
+          ))}
+        </Layer>
+      </Stage>
+    </StageContainer>
   );
 };
 

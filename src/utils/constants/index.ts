@@ -8,4 +8,4 @@ export type PencilConfig = Pick<Konva.LineConfig, 'strokeWidth' | 'lineCap' | 'l
   stroke: string;
 };
 
-export type TextConfig = Pick<Konva.TextConfig, 'fill' | 'fontSize'>;
+export type TextConfig = Pick<Konva.TextConfig, 'fill' | 'fontSize'> & { width: number };

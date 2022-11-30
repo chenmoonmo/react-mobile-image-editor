@@ -34,6 +34,8 @@ const EditorProvider: ComponentType<EditorProviderProps> = ({
   const [textConfig, setTextConfig] = useState({
     fontSize: 30,
     fill: editorColors[0],
+    wrap: 'word',
+    width: width * 0.9
   });
 
   const [activeTool, setActiveTool] = useState<null | ToolUnion>(null);

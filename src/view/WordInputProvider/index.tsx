@@ -163,7 +163,7 @@ const WordInputProvider: ComponentType<WordInputProviderProps> = ({ children }) 
               <div onClick={handleCancel}>Cancel</div>
               <div onClick={hanldeDone}>Done</div>
             </InputActions>
-            <InputArea ref={textareaEl} autoComplete='off' />
+            <InputArea ref={textareaEl} autoComplete='off' wrap='hard' />
             <ColorSelector viewprotHeight={viewprot.height}>
               {editorColors?.map((color) => (
                 <ColorItem

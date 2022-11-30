@@ -10,10 +10,7 @@ import { ReactComponent as IconRecall } from 'assets/icons/icon-recall.svg';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import useWordInput from 'utils/hooks/useWordInput';
-
-const ToolNames = ['Pencil', 'Words', 'Cut', 'Blur', 'Recall'] as const;
-
-export type ToolUnion = typeof ToolNames[number];
+import { ToolUnion } from 'utils/constants';
 
 const ToolsMap: { icon: ReactNode; name: ToolUnion }[] = [
   { icon: <IconPencil />, name: 'Pencil' },
@@ -28,12 +25,11 @@ const ToolContainer = styled.div`
   bottom: 0;
   left: 0;
   width: 100%;
+  padding-bottom: 60px;
+  background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);
 `;
 
 const ToolbarContainer = styled.div`
-  position: absolute;
-  bottom: 60px;
-  left: 0;
   display: flex;
   justify-content: space-evenly;
   box-sizing: border-box;
@@ -118,12 +114,13 @@ const Toolbar: ComponentType = () => {
   }, [activeTool]);
 
   const handleTextAdd = (words: string) => {
+    const textWidth = words.length * 15 > textConfig!.width ? textConfig.width : words.length * 15;
     setTexts((preTexts) => [
       ...preTexts,
       {
         ...textConfig,
         text: words,
-        x: (width - words.length * 15) / 2,
+        x: (width - textWidth) / 2,
         y: height / 2,
       },
     ]);
