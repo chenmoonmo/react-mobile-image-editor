@@ -11,6 +11,14 @@ import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import useWordInput from 'utils/hooks/useWordInput';
 import { ToolUnion } from 'utils/constants';
+import { flushSync } from 'react-dom';
+
+type ToolBarProps = {
+  onCutStart: () => unknown;
+
+  onCutDone: () => unknown;
+  onCutCancel: () => unknown;
+};
 
 const ToolsMap: { icon: ReactNode; name: ToolUnion }[] = [
   { icon: <IconPencil />, name: 'Pencil' },
@@ -93,7 +101,37 @@ const ColorSelector = styled.div`
   padding: 0 30px;
 `;
 
-const Toolbar: ComponentType = () => {
+const InputActions = styled.div`
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 400;
+  color: #ffffff;
+  line-height: 16px;
+  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  div {
+    position: relative;
+    &::after {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: block;
+      width: 200%;
+      height: 200%;
+      content: '';
+      transform: translate(-50%, -50%);
+    }
+  }
+`;
+
+const Toolbar: ComponentType<ToolBarProps> = ({ onCutDone, onCutCancel, onCutStart }) => {
   const {
     width,
     height,
@@ -110,7 +148,7 @@ const Toolbar: ComponentType = () => {
   const { startInput } = useWordInput();
 
   const isColorSelectorShow = useMemo(() => {
-    return ['Pencil', 'Words'].includes(activeTool!);
+    return ['Pencil'].includes(activeTool!);
   }, [activeTool]);
 
   const handleTextAdd = (words: string) => {
@@ -132,12 +170,25 @@ const Toolbar: ComponentType = () => {
         undo();
         break;
       case 'Words':
-        handleSelectTool(null);
+        handleSelectTool('Words');
         startInput('', handleTextAdd);
+        break;
+      case 'Cut':
+        onCutStart?.();
+        handleSelectTool(tool);
         break;
       default:
         handleSelectTool(tool);
     }
+  };
+  const handleCutDown = () => {
+    handleSelectTool(null);
+    onCutDone();
+  };
+
+  const handleCutCancel = () => {
+    handleSelectTool(null);
+    onCutCancel();
   };
 
   return (
@@ -154,18 +205,25 @@ const Toolbar: ComponentType = () => {
           ))}
         </ColorSelector>
       )}
-      <ToolbarContainer>
-        {ToolsMap.map((tool) => (
-          <ToolbarItem
-            key={tool.name}
-            onClick={() => handleToolSelect(tool.name)}
-            isActive={tool.name === activeTool}
-          >
-            {tool.icon}
-            <span>{tool.name}</span>
-          </ToolbarItem>
-        ))}
-      </ToolbarContainer>
+      {activeTool !== 'Cut' ? (
+        <ToolbarContainer>
+          {ToolsMap.map((tool) => (
+            <ToolbarItem
+              key={tool.name}
+              onClick={() => handleToolSelect(tool.name)}
+              isActive={tool.name === activeTool}
+            >
+              {tool.icon}
+              <span>{tool.name}</span>
+            </ToolbarItem>
+          ))}
+        </ToolbarContainer>
+      ) : (
+        <InputActions>
+          <div onClick={handleCutCancel}>Cancel</div>
+          <div onClick={handleCutDown}>Done</div>
+        </InputActions>
+      )}
     </ToolContainer>
   );
 };

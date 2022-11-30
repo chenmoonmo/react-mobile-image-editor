@@ -37,7 +37,7 @@ const ColorItem = styled.div`
 `;
 
 const ColorSelectorStyle = (props: { viewprotHeight: number }) => css`
-  transform: translateY(calc(${props.viewprotHeight - 40}px - 100%));
+  transform: translateY(calc(${props.viewprotHeight - 20}px - 100%));
 `;
 
 const ColorSelector = styled.div`
@@ -163,7 +163,12 @@ const WordInputProvider: ComponentType<WordInputProviderProps> = ({ children }) 
               <div onClick={handleCancel}>Cancel</div>
               <div onClick={hanldeDone}>Done</div>
             </InputActions>
-            <InputArea ref={textareaEl} autoComplete='off' wrap='hard' />
+            <InputArea
+              ref={textareaEl}
+              autoComplete='off'
+              wrap='hard'
+              style={{ color: textConfig.fill }}
+            />
             <ColorSelector viewprotHeight={viewprot.height}>
               {editorColors?.map((color) => (
                 <ColorItem

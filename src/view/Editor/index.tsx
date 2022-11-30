@@ -4,8 +4,6 @@ import EditorStage from 'view/EditorStage';
 import HistoryProvider from 'view/HistoryProvider';
 import WordInputProvider from 'view/WordInputProvider';
 
-import Toolbar from 'view/Toolbar';
-
 type EditorProps = {
   image: string;
   width: number;
@@ -18,7 +16,6 @@ const Editor: ComponentType<EditorProps> = ({ image, width, height }) => {
       <HistoryProvider  image={image}> 
         <WordInputProvider>
           <EditorStage image={image} />
-          <Toolbar />
         </WordInputProvider>
       </HistoryProvider>
     </EditorProvider>

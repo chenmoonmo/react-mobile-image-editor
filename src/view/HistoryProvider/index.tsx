@@ -31,22 +31,30 @@ const getImageSize = (imageWidth: number, imageHeight: number, width: number, he
 
 const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image: imageUrl }) => {
   const { width, height } = useEditor();
-  const [image, setImage] = useState<HistoryContextType['image']>({
-    image: '',
+
+  const [state, setState] = useState<
+    Pick<HistoryContextType, 'blurs' | 'image' | 'lines' | 'texts' | 'group'>
+  >({
+    image: {
+      image: '',
+    },
+    lines: [],
+    texts: [],
+    blurs: [],
+    group: [],
   });
-  const [lines, setLines] = useState<HistoryContextType['lines']>([]);
-  const [texts, setTexts] = useState<HistoryContextType['texts']>([]);
-  const [blurs, setBlurs] = useState<HistoryContextType['blurs']>([]);
+
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const [mainImage, imageStatus] = useImage(imageUrl);
 
   const handleDataChange = (
-    state: Pick<HistoryContextType, 'blurs' | 'image' | 'lines' | 'texts'>
+    state: Pick<HistoryContextType, 'blurs' | 'image' | 'lines' | 'texts' | 'group'>
   ) => {
     console.log('historyChange', state);
-    setLines(state.lines);
-    setTexts(state.texts);
-    setImage(state.image);
+    setState(state);
+    stateRef.current = state;
   };
 
   const history = useRef<History>();
@@ -55,10 +63,8 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
     callback: (lines: HistoryContextType['lines']) => HistoryContextType['lines']
   ) => {
     history.current?.push({
-      lines: callback(lines),
-      image,
-      texts,
-      blurs,
+      ...stateRef.current,
+      lines: callback(stateRef.current.lines),
     });
   };
 
@@ -66,21 +72,26 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
     callback: (texts: HistoryContextType['texts']) => HistoryContextType['texts']
   ) => {
     history.current?.push({
-      lines,
-      image,
-      texts: callback(texts),
-      blurs,
+      ...stateRef.current,
+      texts: callback(stateRef.current.texts),
     });
   };
 
   const handleImagechange = (
-    callback: (texts: HistoryContextType['image']) => HistoryContextType['image']
+    imageConfig: Partial<HistoryContextType['image']>,
+    groupConfig: HistoryContextType['group'] = {}
   ) => {
     history.current?.push({
-      lines,
-      image: callback(image),
-      texts,
-      blurs,
+      ...stateRef.current,
+      image: Object.assign({}, stateRef.current.image, { ...imageConfig }),
+      group: Object.assign({}, stateRef.current.group, groupConfig),
+    });
+  };
+
+  const handleGroupChange = (groupConfig: HistoryContextType['group']) => {
+    history.current?.push({
+      ...stateRef.current,
+      group: Object.assign({}, stateRef.current.group, groupConfig),
     });
   };
 
@@ -100,43 +111,49 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
         width,
         height
       );
-      console.log(imageWidth, imageHeight)
-      const x = (width - imageWidth) / 2;
-      const y = (height - imageHeight) / 2;
-      history.current = new History({
-        initialState: {
-          image: {
-            image: mainImage,
-            width: imageWidth,
-            height: imageHeight,
-            x,
-            y,
-          },
-          lines,
-          texts,
-          blurs,
-        },
-        useChunks: false,
-        onChange: handleDataChange,
-      });
-      console.log(history.current);
-      setImage({
+
+      const initalImage = {
         image: mainImage,
         width: imageWidth,
         height: imageHeight,
-        x,
-        y,
+      };
+
+      const initalGroup = {
+        width: imageWidth,
+        height: imageHeight,
+        x: (width - imageWidth) / 2,
+        y: (height - imageHeight) / 2,
+      };
+
+      history.current = new History({
+        initialState: {
+          ...stateRef.current,
+          image: initalImage,
+          group: initalGroup,
+        },
+        useChunks: false,
+        delay: 0,
+        onChange: handleDataChange,
       });
+
+      setState((preVal) => {
+        return {
+          ...preVal,
+          image: initalImage,
+          group: initalGroup,
+        };
+      });
+
+      console.log(history.current);
+      console.log(initalImage);
     }
   }, [imageStatus]);
 
   return (
     <HistroyContext.Provider
       value={{
-        image,
-        lines,
-        texts,
-        blurs,
+        ...state,
+        setGroup: handleGroupChange,
         setLines: handleLineChange,
         setTexts: handleTextChange,
         setImage: handleImagechange,
