@@ -7,15 +7,9 @@ import useHistory from 'utils/hooks/useHistory';
 import styled from '@emotion/styled';
 import ClipRect from 'view/ClipRect';
 import Toolbar from 'view/Toolbar';
-import { flushSync } from 'react-dom';
 
 type EditorProps = {
   image: string;
-};
-
-type Point = {
-  x: number;
-  y: number;
 };
 
 const StageContainer = styled.div`
@@ -44,7 +38,6 @@ const StageContainer = styled.div`
 
 const getImageSize = (imageWidth: number, imageHeight: number, width: number, height: number) => {
   console.log(imageWidth, imageHeight, width, height);
-  height = height - 80;
   if (imageWidth < imageHeight && width <= height) {
     console.log(1);
     if (imageWidth / imageHeight < 1) {
@@ -140,7 +133,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
     const imgWidht = scaleGroup.current?.width()! * 0.93;
     const imgHeight = scaleGroup.current?.height()! * 0.93;
     const imgX = (width - imgWidht) / 2;
-    const imgY = (height - 80 - imgHeight) / 2;
+    const imgY = (height - imgHeight) / 2;
     currentImage.current?.width(imgWidht);
     currentImage.current?.height(imgHeight);
     scaleGroup.current?.width(imgWidht);
@@ -195,7 +188,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
 
   const handleCutCacenl = () => {
     const imgX = (width - image.width!) / 2;
-    const imgY = (height - 80 - image.height!) / 2;
+    const imgY = (height - image.height!) / 2;
     currentImage.current?.width(image.width!);
     currentImage.current?.height(image.height!);
     scaleGroup.current?.width(image.width!);
@@ -254,24 +247,6 @@ const EditorStage: ComponentType<EditorProps> = () => {
         handleDrawEnd();
         break;
       case 'Cut':
-        // if (lastScale.current.lastCenter) {
-        //   setGroup({
-        //     x: scaleGroup.current?.x(),
-        //     y: scaleGroup.current?.y(),
-        //     scaleX: scaleGroup.current?.scaleX(),
-        //     scaleY: scaleGroup.current?.scaleY(),
-        //   });
-        //   console.log({
-        //     x: scaleGroup.current?.x(),
-        //     y: scaleGroup.current?.y(),
-        //     scaleX: scaleGroup.current?.scaleX(),
-        //     scaleY: scaleGroup.current?.scaleY(),
-        //   });
-        // }
-        // lastScale.current = {
-        //   lastCenter: null,
-        //   lastDist: 0,
-        // };
         break;
     }
   };
