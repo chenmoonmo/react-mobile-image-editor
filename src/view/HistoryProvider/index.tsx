@@ -100,10 +100,14 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
       };
 
       const initalGroup = {
-        width: imageWidth,
-        height: imageHeight,
         x: (width - imageWidth) / 2,
         y: (height - imageHeight) / 2,
+        clip: {
+          x: (width - imageWidth) / 2,
+          y: (height - imageHeight) / 2,
+          width: imageWidth,
+          height: imageHeight,
+        },
       };
 
       history.current = new History({

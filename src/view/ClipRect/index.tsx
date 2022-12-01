@@ -1,6 +1,13 @@
 import Konva from 'konva';
 import { Box } from 'konva/lib/shapes/Transformer';
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Rect, Transformer } from 'react-konva';
 
 const ClipRect = forwardRef<{
@@ -11,33 +18,48 @@ const ClipRect = forwardRef<{
 } | null>((_, ref) => {
   const reRef = useRef<Konva.Rect>(null);
   const trRef = useRef<Konva.Transformer>(null);
+  const clipArea = useRef<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }>();
+
   const [clipSize, setSize] = useState<{
-    x?: number;
-    y?: number;
-    width?: number;
-    height?: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
   } | null>(null);
 
   const handelResize = (oldBox: Box, newBox: Box) => {
-    const group = reRef.current?.getParent();
-    const groupX = group?.x()!;
-    const groupY = group?.y()!;
-    const groupWidth = group?.width()!;
-    const groupHeight = group?.height()!;
+    const { x, y, width, height } = clipArea.current!;
 
-    if (newBox.x < groupX) {
-      newBox.x = groupX;
+    const { x: currentX, y: currentY, width: currentWidth, height: currentHeight } = newBox;
+
+    if (currentX < x) {
+      newBox.x = x;
     }
-    if (newBox.y < groupY) {
-      newBox.y = groupY;
+    if (currentY < y) {
+      newBox.y = y;
     }
 
-    if (Math.floor(newBox.width + newBox.x - groupX) > groupWidth) {
+    if (currentWidth > width) {
+      newBox.width = width;
+    }
+
+    if (currentHeight > height) {
+      newBox.height = height;
+    }
+
+    if (currentWidth < 1) {
       return oldBox;
     }
-    if (Math.floor(newBox.height + newBox.y - groupY) > groupHeight) {
+
+    if (currentWidth < 1) {
       return oldBox;
     }
+
     setSize({
       x: trRef.current?.x()!,
       y: trRef.current?.y()!,
@@ -48,25 +70,29 @@ const ClipRect = forwardRef<{
   };
 
   const hanldeDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
-    const group = reRef.current?.getParent();
-    const groupX = group?.x()!;
-    const groupY = group?.y()!;
-    const groupWidth = group?.width()!;
-    const groupHeight = group?.height()!;
-    if (e.target.x() < groupX) {
-      e.target.x(0);
-    }
-    if (e.target.y() < groupY) {
-      e.target.y(0);
+    const { x, y, width, height } = clipArea.current!;
+
+    const currentX = trRef.current?.x()!;
+    const currentY = trRef.current?.y()!;
+    const currentWidth = trRef.current?.width()!;
+    const currentHeight = trRef.current?.height()!;
+
+    if (currentX - x < 0) {
+      e.target.x(x);
     }
 
-    if (e.target.x() + trRef.current?.width()! > groupWidth) {
-      e.target.x(groupWidth - trRef.current?.width()!);
+    if (currentWidth + currentX > width + x) {
+      e.target.x(x + width - currentWidth);
     }
 
-    if (e.target.y() + trRef.current?.height()! > groupHeight) {
-      e.target.y(groupHeight - trRef.current?.height()!);
+    if (currentY - y < 0) {
+      e.target.y(y);
     }
+
+    if (currentY + currentHeight > y + height) {
+      e.target.y(y + height - currentHeight);
+    }
+
     setSize({
       x: trRef.current?.x()!,
       y: trRef.current?.y()!,
@@ -75,14 +101,14 @@ const ClipRect = forwardRef<{
     });
   };
 
-  useEffect(() => {
-    const group = reRef.current?.getParent();
-    const groupWidth = group?.width()!;
-    const groupHeight = group?.height()!;
-    reRef.current?.x(0);
-    reRef.current?.y(0);
-    reRef.current?.width(groupWidth);
-    reRef.current?.height(groupHeight);
+  useLayoutEffect(() => {
+    const parent = reRef.current?.getParent().findOne('#clip')! as Konva.Group;
+    const clip = parent?.clip()!;
+    clipArea.current = clip;
+    reRef.current?.x(clip.x);
+    reRef.current?.y(clip.y);
+    reRef.current?.width(clip.width);
+    reRef.current?.height(clip.height);
     trRef.current?.nodes([reRef.current!]);
     trRef.current?.getLayer()?.batchDraw();
   }, []);
@@ -90,20 +116,17 @@ const ClipRect = forwardRef<{
   useImperativeHandle(
     ref,
     () => {
-      if (!clipSize) {
-        return {};
+      if (clipSize) {
+        const { x: areaX, y: areaY, width: areaWidth, height: areaHeight } = clipArea.current!;
+        const { x, y, width, height } = clipSize;
+        return {
+          x: x < 0 ? 0 : (x - areaX) / 0.93,
+          y: y < 0 ? 0 : (y - areaY) / 0.93,
+          width: width < areaWidth && width > 0 ? width / 0.93 : areaWidth / 0.93,
+          height: height < areaHeight && height > 0 ? height / 0.93 : areaHeight / 0.93,
+        };
       }
-      const group = reRef.current?.getParent();
-      const groupWidth = group?.width()!;
-      const groupHeight = group?.height()!;
-      const { x = 0, y = 0, width = groupWidth, height = groupHeight } = clipSize;
-
-      return {
-        x: x < 0 ? 0 : x,
-        y: y < 0 ? 0 : y,
-        width: width < groupWidth && width > 0 ? width : groupWidth,
-        height: height < groupHeight && height > 0 ? height : groupHeight,
-      };
+      return {};
     },
     [clipSize]
   );
