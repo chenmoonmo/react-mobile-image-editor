@@ -7,4 +7,4 @@ import image2 from './image.png';
 
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
-root.render(<Editor image={image} width={window.innerWidth} height={window.innerHeight} />);
+root.render(<Editor image={image2} width={window.innerWidth} height={window.innerHeight} />);

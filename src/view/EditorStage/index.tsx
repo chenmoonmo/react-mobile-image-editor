@@ -7,6 +7,7 @@ import useHistory from 'utils/hooks/useHistory';
 import styled from '@emotion/styled';
 import ClipRect from 'view/ClipRect';
 import Toolbar from 'view/Toolbar';
+import { getImageSize } from 'utils/utils';
 
 type EditorProps = {
   image: string;
@@ -16,6 +17,7 @@ const StageContainer = styled.div`
   position: relative;
   width: 100%;
   height: 100%;
+  padding: 30px 0;
   &::before,
   &::after {
     position: absolute;
@@ -27,6 +29,7 @@ const StageContainer = styled.div`
     content: '';
     background: linear-gradient(180deg, rgba(34, 34, 34, 0.94) 0%, rgba(71, 71, 71, 0) 100%);
     z-index: -1;
+    mix-blend-mode: darken;
   }
   &::after {
     top: unset;
@@ -36,39 +39,6 @@ const StageContainer = styled.div`
   }
 `;
 
-const getImageSize = (imageWidth: number, imageHeight: number, width: number, height: number) => {
-  console.log(imageWidth, imageHeight, width, height);
-  if (imageWidth < imageHeight && width <= height) {
-    console.log(1);
-    if (imageWidth / imageHeight < 1) {
-      return [(imageWidth / imageHeight) * height, height];
-    }
-    return [width, (imageWidth / imageHeight) * height];
-  }
-
-  if (imageWidth < imageHeight && width > height) {
-    console.log(2);
-    if (imageWidth / imageHeight < 1) {
-      return [width, (imageWidth / imageHeight) * height];
-    }
-
-    return [(imageWidth / imageHeight) * height, height];
-  }
-
-  if (imageWidth > imageHeight && width > height) {
-    console.log(3);
-
-    return [(imageWidth / imageHeight) * height, height];
-  }
-
-  if (imageWidth > imageHeight && width <= height) {
-    console.log(4);
-
-    return [width, (imageHeight / imageWidth) * width];
-  }
-
-  return [0, 0];
-};
 
 const EditorStage: ComponentType<EditorProps> = () => {
   const { width, height, activeTool, pencilConfig } = useEditor();
@@ -130,8 +100,10 @@ const EditorStage: ComponentType<EditorProps> = () => {
   };
 
   const handleCutStart = () => {
+    console.log(scaleGroup.current?.width());
     const imgWidht = scaleGroup.current?.width()! * 0.93;
     const imgHeight = scaleGroup.current?.height()! * 0.93;
+    console.log(imgWidht, imgHeight);
     const imgX = (width - imgWidht) / 2;
     const imgY = (height - imgHeight) / 2;
     currentImage.current?.width(imgWidht);

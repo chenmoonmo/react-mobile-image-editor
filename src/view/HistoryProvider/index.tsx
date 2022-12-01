@@ -3,30 +3,11 @@ import HistroyContext, { HistoryContextType } from 'utils/context/HistroyContext
 import { History } from 'stateshot';
 import useImage from 'use-image';
 import useEditor from 'utils/hooks/useEditor';
+import { getImageSize } from 'utils/utils';
 
 type HistoryProviderProps = {
   children: ReactNode;
   image: string;
-};
-
-const getImageSize = (imageWidth: number, imageHeight: number, width: number, height: number) => {
-  if (imageWidth < imageHeight && width <= height) {
-    return [width, (imageWidth / imageHeight) * height];
-  }
-
-  if (imageWidth < imageHeight && width > height) {
-    return [(imageWidth / imageHeight) * height, height];
-  }
-
-  if (imageWidth > imageHeight && width > height) {
-    return [(imageWidth / imageHeight) * height, height];
-  }
-
-  if (imageWidth > imageHeight && width <= height) {
-    return [width, (imageHeight / imageWidth) * width];
-  }
-
-  return [0, 0];
 };
 
 const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image: imageUrl }) => {
