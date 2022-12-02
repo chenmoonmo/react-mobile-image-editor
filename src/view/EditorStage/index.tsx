@@ -17,7 +17,6 @@ const StageContainer = styled.div`
   position: relative;
   width: 100%;
   height: 100%;
-  padding: 30px 0;
   background: #000;
   &::before,
   &::after {
@@ -107,29 +106,22 @@ const EditorStage: ComponentType<EditorProps> = () => {
     // clipGroup.current?.scaleY(0.93);
     // clipGroup.current?.x((width * 0.07) / 2);
     // clipGroup.current?.y((height * 0.07) / 2);
-
-    const scaleRatio = scaleGroup.current?.scaleX()! * 0.93;
-
-    scaleGroup.current?.scaleX(scaleRatio);
-    scaleGroup.current?.scaleY(scaleRatio);
-
-    console.log(scaleRatio, group.clip.width);
-
-    scaleGroup.current?.x(group.x! + (0.07 / 2) * group.clip.width);
-    scaleGroup.current?.y(group.y! + (0.07 / 2) * group.clip.height);
-
-    clipGroup.current?.clip({
-      x: group.clip.x! + (group.clip.width! * 0.07) / 2,
-      y: group.clip.y! + (group.clip.height! * 0.07) / 2,
-      width: group.clip.width! * 0.93,
-      height: group.clip.height! * 0.93,
-    });
+    // const scaleRatio = scaleGroup.current?.scaleX()! * 0.93;
+    // scaleGroup.current?.scaleX(scaleRatio);
+    // scaleGroup.current?.scaleY(scaleRatio);
+    // console.log(scaleRatio, group.clip.width);
+    // scaleGroup.current?.x(group.x! + (0.07 / 2) * group.clip.width);
+    // scaleGroup.current?.y(group.y! + (0.07 / 2) * group.clip.height);
+    // clipGroup.current?.clip({
+    //   x: group.clip.x! + (group.clip.width! * 0.07) / 2,
+    //   y: group.clip.y! + (group.clip.height! * 0.07) / 2,
+    //   width: group.clip.width! * 0.93,
+    //   height: group.clip.height! * 0.93,
+    // });
   };
 
   const handleCut = () => {
     if (clipRef.current?.width) {
-      console.log(clipRef.current);
-
       const [imageWidth, imageHeight] = getImageSize(
         clipRef.current.width,
         clipRef.current.height,
@@ -137,61 +129,94 @@ const EditorStage: ComponentType<EditorProps> = () => {
         height
       );
 
-      console.log({
-        x: group.x! + clipRef.current.x,
-        y: group.y! + clipRef.current.y,
-        width: clipRef.current.width,
-        height: clipRef.current.height,
-      });
-
-      console.log(
-        currentImage.current?.toDataURL({
-          x: group.x! + clipRef.current.x,
-          y: group.y! + clipRef.current.y,
-          width: clipRef.current.width,
-          height: clipRef.current.height,
-        })
-      );
-
       const scaleRatio =
         (imageWidth / clipRef.current.width + imageHeight / clipRef.current.height) / 2;
 
       const [selectionX, selectionY] = getPosition(imageWidth, imageHeight, width, height);
 
-      console.log('scaleRatio', scaleRatio, (group.scaleX ?? 1) * scaleRatio, clipRef.current);
+      console.log('clipSize', clipRef.current);
+
+      console.log('scaleRatio', scaleRatio);
+      console.log('groupinfo', group);
+
       console.log({
-        selectionX,
-        selectionY,
-        imageWidth,
-        imageHeight,
+        selectionX, // 选区的居中 X
+        selectionY, // 选区的居中 Y
+        imageWidth, // 选区的宽度
+        imageHeight, // 选取的高度
       });
 
-      setImage(
-        {},
-        {
-          x: selectionX - clipRef.current.x * scaleRatio,
-          y: selectionY - clipRef.current.y * scaleRatio,
-          scaleX: (group.scaleX ?? 1) * scaleRatio,
-          scaleY: (group.scaleY ?? 1) * scaleRatio,
-          clip: {
-            x: selectionX,
-            y: selectionY,
-            width: imageWidth,
-            height: imageHeight,
-          },
-        }
-      );
+      scaleGroup.current?.scale({
+        x: scaleGroup.current.scaleX() * scaleRatio,
+        y: scaleGroup.current.scaleX() * scaleRatio,
+      });
+
+      // console.log({
+      //   x: scaleGroup.current?.x(),
+      //   y: scaleGroup.current?.y(),
+      // });
+
+      // scaleGroup.current?.x(clipRef.current.x);
+      // scaleGroup.current?.y(clipRef.current.y);
+
+      // clipGroup.current?.clip({
+      //   ...clipRef.current,
+      //   width: imageWidth,
+      //   height: imageHeight,
+      // });
+
+      // scaleGroup.current?.scale({
+      //   x: scaleGroup.current.scaleX() * scaleRatio,
+      //   y: scaleGroup.current.scaleY() * scaleRatio,
+      // });
+
+      // scaleGroup.current?.x(clipRef.current.x * scaleRatio);
+      // scaleGroup.current?.y(clipRef.current.y * scaleRatio);
+
+      scaleGroup.current?.move({
+        x: -clipRef.current.x * scaleRatio,
+        y: -clipRef.current.y * scaleRatio,
+      });
+
+      // scaleGroup.current?.scale({
+      //   x: scaleGroup.current.scaleX() * scaleRatio,
+      //   y: scaleGroup.current.scaleX() * scaleRatio,
+      // });
+
+      // scaleGroup.current?.move({
+      //   x: -clipRef.current.x * scaleRatio * scaleGroup.current.scaleX(),
+      //   y: -clipRef.current.y * scaleRatio * scaleGroup.current.scaleX(),
+      // });
+
+      // console.log(currentImage.current?.getAbsoluteScale());
+      // console.log(currentImage.current?.absolutePosition());
+
+      // setImage(
+      //   {},
+      //   {
+      //     x: selectionX - (clipRef.current.x + group.x!) * scaleRatio, // 有问题
+      //     y: group.clip.y  * scaleRatio - group.y!, // 有问题
+      //     scaleX: (group.scaleX ?? 1) * scaleRatio,
+      //     scaleY: (group.scaleY ?? 1) * scaleRatio,
+      //     clip: {
+      //       x: selectionX,
+      //       y: selectionY,
+      //       width: imageWidth,
+      //       height: imageHeight,
+      //     },
+      //   }
+      // );
     } else {
       handleCutCacenl();
     }
   };
 
   const handleCutCacenl = () => {
-    scaleGroup.current?.scaleX(scaleGroup.current?.scaleX() / 0.93);
-    scaleGroup.current?.scaleY(scaleGroup.current?.scaleX() / 0.93);
-    scaleGroup.current?.x(group.x!);
-    scaleGroup.current?.y(group.y!);
-    clipGroup.current?.clip(group.clip);
+    // scaleGroup.current?.scaleX(scaleGroup.current?.scaleX() / 0.93);
+    // scaleGroup.current?.scaleY(scaleGroup.current?.scaleX() / 0.93);
+    // scaleGroup.current?.x(group.x!);
+    // scaleGroup.current?.y(group.y!);
+    // clipGroup.current?.clip(group.clip);
     // clipGroup.current?.scaleX(0.93);
     // clipGroup.current?.scaleY(0.93);
     // clipGroup.current?.x((width * 0.07) / 2);
@@ -271,7 +296,10 @@ const EditorStage: ComponentType<EditorProps> = () => {
             <Rect width={width} height={height} x={0} y={0} fill='red' />
             {/* scale group */}
             <Group
+              id='scale'
               ref={scaleGroup}
+              offsetX={0}
+              offsetY={0}
               scaleX={group.scaleX}
               scaleY={group.scaleY}
               x={group.x}

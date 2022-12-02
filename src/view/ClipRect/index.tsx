@@ -117,13 +117,26 @@ const ClipRect = forwardRef<{
     ref,
     () => {
       if (clipSize) {
+        const parent = reRef.current?.getParent().findOne('#scale')! as Konva.Group;
+
         const { x: areaX, y: areaY, width: areaWidth, height: areaHeight } = clipArea.current!;
         const { x, y, width, height } = clipSize;
+        console.log(reRef.current?.absolutePosition());
+        console.log(parent.x());
+        console.log(parent.y());
+
         return {
-          x: x < 0 ? 0 : (x - areaX) / 0.93,
-          y: y < 0 ? 0 : (y - areaY) / 0.93,
-          width: width < areaWidth && width > 0 ? width / 0.93 : areaWidth / 0.93,
-          height: height < areaHeight && height > 0 ? height / 0.93 : areaHeight / 0.93,
+          x: reRef.current?.absolutePosition().x! - parent.x(),
+          y: reRef.current?.absolutePosition().y! - parent.y(),
+          width: width < areaWidth && width > 0 ? width : areaWidth,
+          height: height < areaHeight && height > 0 ? height : areaHeight,
+        };
+
+        return {
+          x: x < 0 ? 0 : x - areaX,
+          y: y < 0 ? 0 : y - areaY,
+          width: width < areaWidth && width > 0 ? width : areaWidth,
+          height: height < areaHeight && height > 0 ? height : areaHeight,
         };
       }
       return {};
