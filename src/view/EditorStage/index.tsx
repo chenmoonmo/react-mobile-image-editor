@@ -134,78 +134,21 @@ const EditorStage: ComponentType<EditorProps> = () => {
 
       const [selectionX, selectionY] = getPosition(imageWidth, imageHeight, width, height);
 
-      console.log('clipSize', clipRef.current);
-
-      console.log('scaleRatio', scaleRatio);
-      console.log('groupinfo', group);
-
-      console.log({
-        selectionX, // 选区的居中 X
-        selectionY, // 选区的居中 Y
-        imageWidth, // 选区的宽度
-        imageHeight, // 选取的高度
-      });
-
-      scaleGroup.current?.scale({
-        x: scaleGroup.current.scaleX() * scaleRatio,
-        y: scaleGroup.current.scaleX() * scaleRatio,
-      });
-
-      // console.log({
-      //   x: scaleGroup.current?.x(),
-      //   y: scaleGroup.current?.y(),
-      // });
-
-      // scaleGroup.current?.x(clipRef.current.x);
-      // scaleGroup.current?.y(clipRef.current.y);
-
-      // clipGroup.current?.clip({
-      //   ...clipRef.current,
-      //   width: imageWidth,
-      //   height: imageHeight,
-      // });
-
-      // scaleGroup.current?.scale({
-      //   x: scaleGroup.current.scaleX() * scaleRatio,
-      //   y: scaleGroup.current.scaleY() * scaleRatio,
-      // });
-
-      // scaleGroup.current?.x(clipRef.current.x * scaleRatio);
-      // scaleGroup.current?.y(clipRef.current.y * scaleRatio);
-
-      scaleGroup.current?.move({
-        x: -clipRef.current.x * scaleRatio,
-        y: -clipRef.current.y * scaleRatio,
-      });
-
-      // scaleGroup.current?.scale({
-      //   x: scaleGroup.current.scaleX() * scaleRatio,
-      //   y: scaleGroup.current.scaleX() * scaleRatio,
-      // });
-
-      // scaleGroup.current?.move({
-      //   x: -clipRef.current.x * scaleRatio * scaleGroup.current.scaleX(),
-      //   y: -clipRef.current.y * scaleRatio * scaleGroup.current.scaleX(),
-      // });
-
-      // console.log(currentImage.current?.getAbsoluteScale());
-      // console.log(currentImage.current?.absolutePosition());
-
-      // setImage(
-      //   {},
-      //   {
-      //     x: selectionX - (clipRef.current.x + group.x!) * scaleRatio, // 有问题
-      //     y: group.clip.y  * scaleRatio - group.y!, // 有问题
-      //     scaleX: (group.scaleX ?? 1) * scaleRatio,
-      //     scaleY: (group.scaleY ?? 1) * scaleRatio,
-      //     clip: {
-      //       x: selectionX,
-      //       y: selectionY,
-      //       width: imageWidth,
-      //       height: imageHeight,
-      //     },
-      //   }
-      // );
+      setImage(
+        {},
+        {
+          x: (group.x! - clipRef.current.x) * scaleRatio! + selectionX,
+          y: (group.y! - clipRef.current.y) * scaleRatio! + selectionY,
+          scaleX: (group.scaleX ?? 1) * scaleRatio,
+          scaleY: (group.scaleY ?? 1) * scaleRatio,
+          clip: {
+            x: selectionX,
+            y: selectionY,
+            width: imageWidth,
+            height: imageHeight,
+          },
+        }
+      );
     } else {
       handleCutCacenl();
     }

@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Rect, Transformer } from 'react-konva';
+import { Group, Rect, Transformer } from 'react-konva';
 
 const ClipRect = forwardRef<{
   x?: number;
@@ -102,7 +102,7 @@ const ClipRect = forwardRef<{
   };
 
   useLayoutEffect(() => {
-    const parent = reRef.current?.getParent().findOne('#clip')! as Konva.Group;
+    const parent = reRef.current?.getStage()?.findOne('#clip')! as Konva.Group;
     const clip = parent?.clip()!;
     clipArea.current = clip;
     reRef.current?.x(clip.x);
@@ -117,7 +117,7 @@ const ClipRect = forwardRef<{
     ref,
     () => {
       if (clipSize) {
-        const parent = reRef.current?.getParent().findOne('#scale')! as Konva.Group;
+        const parent = reRef.current?.getStage()?.findOne('#scale')! as Konva.Group;
 
         const { x: areaX, y: areaY, width: areaWidth, height: areaHeight } = clipArea.current!;
         const { x, y, width, height } = clipSize;
@@ -126,15 +126,8 @@ const ClipRect = forwardRef<{
         console.log(parent.y());
 
         return {
-          x: reRef.current?.absolutePosition().x! - parent.x(),
-          y: reRef.current?.absolutePosition().y! - parent.y(),
-          width: width < areaWidth && width > 0 ? width : areaWidth,
-          height: height < areaHeight && height > 0 ? height : areaHeight,
-        };
-
-        return {
-          x: x < 0 ? 0 : x - areaX,
-          y: y < 0 ? 0 : y - areaY,
+          x: reRef.current?.absolutePosition().x!,
+          y: reRef.current?.absolutePosition().y!,
           width: width < areaWidth && width > 0 ? width : areaWidth,
           height: height < areaHeight && height > 0 ? height : areaHeight,
         };
@@ -145,10 +138,10 @@ const ClipRect = forwardRef<{
   );
 
   return (
-    <>
+    <Group >
       <Transformer ref={trRef} rotateEnabled={false} boundBoxFunc={handelResize} />
       <Rect ref={reRef} draggable={true} onDragMove={hanldeDragMove} />
-    </>
+    </Group>
   );
 });
 export default ClipRect;
