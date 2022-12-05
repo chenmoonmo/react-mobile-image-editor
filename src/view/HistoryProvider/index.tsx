@@ -22,7 +22,7 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
     lines: [],
     texts: [],
     blurs: [],
-    group: [],
+    group: {},
   });
 
   const stateRef = useRef(state);
@@ -102,6 +102,8 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
       const initalGroup = {
         x: (width - imageWidth) / 2,
         y: (height - imageHeight) / 2,
+        scaleX: 1,
+        scaleY: 1,
         clip: {
           x: (width - imageWidth) / 2,
           y: (height - imageHeight) / 2,

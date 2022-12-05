@@ -1,13 +1,14 @@
-import { Layer, Stage, Line, Image, Text, Group, Shape, Rect, Transformer } from 'react-konva';
+import { Layer, Stage, Line, Image, Text, Group, Rect } from 'react-konva';
 
 import React, { ComponentType, useRef } from 'react';
 import Konva from 'konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import styled from '@emotion/styled';
-import ClipRect from 'view/ClipRect';
 import Toolbar from 'view/Toolbar';
-import { getImageSize, getPosition } from 'utils/utils';
+import { getImageSize, getPosition, rotateAroundCenter } from 'utils/utils';
+import ClipStage from 'view/ClipStage';
+import { Box } from 'konva/lib/shapes/Transformer';
 
 type EditorProps = {
   image: string;
@@ -40,7 +41,7 @@ const StageContainer = styled.div`
 `;
 
 const EditorStage: ComponentType<EditorProps> = () => {
-  const { width, height, activeTool, pencilConfig } = useEditor();
+  const { width, height, activeTool, pencilConfig, handleSelectTool } = useEditor();
   const { image, texts, lines, group, setLines, setImage } = useHistory();
 
   const stage = useRef<Konva.Stage>(null);
@@ -51,13 +52,6 @@ const EditorStage: ComponentType<EditorProps> = () => {
   const scaleGroup = useRef<Konva.Group>(null);
   const currentImage = useRef<Konva.Image | null>(null);
   const currentLine = useRef<Konva.Line | null>(null);
-
-  const clipRef = useRef<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null>(null);
 
   const handleDrawStart = () => {
     const pos = stage.current?.getPointerPosition()!;
@@ -86,11 +80,17 @@ const EditorStage: ComponentType<EditorProps> = () => {
 
   const handleDrawEnd = () => {
     const lastLine = currentLine.current;
+    console.log(lastLine?.getRelativePointerPosition());
+
     setLines((preLines) => {
       return [
         ...preLines,
         {
           ...pencilConfig,
+          scaleX: 1 / group.scaleX!,
+          scaleY: 1 / group.scaleY!,
+          x: -group.x! / group.scaleX!,
+          y: -group.y! / group.scaleY!,
           points: lastLine?.points(),
         },
       ];
@@ -120,38 +120,26 @@ const EditorStage: ComponentType<EditorProps> = () => {
     // });
   };
 
-  const handleCut = () => {
-    if (clipRef.current?.width) {
-      const [imageWidth, imageHeight] = getImageSize(
-        clipRef.current.width,
-        clipRef.current.height,
-        width,
-        height
-      );
-
-      const scaleRatio =
-        (imageWidth / clipRef.current.width + imageHeight / clipRef.current.height) / 2;
-
-      const [selectionX, selectionY] = getPosition(imageWidth, imageHeight, width, height);
-
-      setImage(
-        {},
-        {
-          x: (group.x! - clipRef.current.x) * scaleRatio! + selectionX,
-          y: (group.y! - clipRef.current.y) * scaleRatio! + selectionY,
-          scaleX: (group.scaleX ?? 1) * scaleRatio,
-          scaleY: (group.scaleY ?? 1) * scaleRatio,
-          clip: {
-            x: selectionX,
-            y: selectionY,
-            width: imageWidth,
-            height: imageHeight,
-          },
-        }
-      );
-    } else {
-      handleCutCacenl();
-    }
+  const handleCut = (clipSize: Box) => {
+    handleSelectTool(null);
+    const [imageWidth, imageHeight] = getImageSize(clipSize.width, clipSize.height, width, height);
+    const scaleRatio = (imageWidth / clipSize.width + imageHeight / clipSize.height) / 2;
+    const [selectionX, selectionY] = getPosition(imageWidth, imageHeight, width, height);
+    setImage(
+      {},
+      {
+        x: (group.x! - clipSize.x) * scaleRatio! + selectionX,
+        y: (group.y! - clipSize.y) * scaleRatio! + selectionY,
+        scaleX: (group.scaleX ?? 1) * scaleRatio,
+        scaleY: (group.scaleY ?? 1) * scaleRatio,
+        clip: {
+          x: selectionX,
+          y: selectionY,
+          width: imageWidth,
+          height: imageHeight,
+        },
+      }
+    );
   };
 
   const handleCutCacenl = () => {
@@ -164,6 +152,21 @@ const EditorStage: ComponentType<EditorProps> = () => {
     // clipGroup.current?.scaleY(0.93);
     // clipGroup.current?.x((width * 0.07) / 2);
     // clipGroup.current?.y((height * 0.07) / 2);
+  };
+
+  const handleRota = () => {
+    const attrs = {
+      x: currentImage.current?.x(),
+      y: currentImage.current?.y(),
+      width: currentImage.current?.width(),
+      height: currentImage.current?.height(),
+      rotation: currentImage.current?.rotation(),
+    };
+    const rotatedAttrs = rotateAroundCenter(attrs, 90);
+    currentImage.current?.setAttrs(rotatedAttrs);
+
+    console.log(scaleGroup.current?.width());
+    console.log(scaleGroup.current?.height());
   };
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -256,24 +259,18 @@ const EditorStage: ComponentType<EditorProps> = () => {
                 height={image.height}
               />
               {texts.map((text, index) => (
-                <Text
-                  key={index}
-                  draggable
-                  {...text}
-                  x={text.x! - group.x!}
-                  y={text.y! - group.y!}
-                />
+                <Text key={index} draggable {...text} />
               ))}
               {lines.map((line, index) => (
-                <Line key={index} {...line} x={-group.x!} y={-group.y!} />
+                <Line key={index} {...line} />
               ))}
             </Group>
           </Group>
-          {activeTool === 'Cut' && <ClipRect ref={clipRef} />}
-          {/* <Rect {...group.clip} stroke='blue' strokeWidth={2} /> */}
+          {/* {activeTool === 'Cut' && <ClipRect ref={clipRef} />} */}
         </Layer>
       </Stage>
-      <Toolbar onCutStart={handleCutStart} onCutDone={handleCut} onCutCancel={handleCutCacenl} />
+      {activeTool === 'Cut' && <ClipStage onCutDone={handleCut} />}
+      <Toolbar />
     </StageContainer>
   );
 };

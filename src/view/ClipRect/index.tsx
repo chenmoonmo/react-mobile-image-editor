@@ -2,7 +2,6 @@ import Konva from 'konva';
 import { Box } from 'konva/lib/shapes/Transformer';
 import {
   forwardRef,
-  useEffect,
   useImperativeHandle,
   useLayoutEffect,
   useRef,
@@ -117,13 +116,8 @@ const ClipRect = forwardRef<{
     ref,
     () => {
       if (clipSize) {
-        const parent = reRef.current?.getStage()?.findOne('#scale')! as Konva.Group;
-
-        const { x: areaX, y: areaY, width: areaWidth, height: areaHeight } = clipArea.current!;
-        const { x, y, width, height } = clipSize;
-        console.log(reRef.current?.absolutePosition());
-        console.log(parent.x());
-        console.log(parent.y());
+        const { width: areaWidth, height: areaHeight } = clipArea.current!;
+        const { width, height } = clipSize;
 
         return {
           x: reRef.current?.absolutePosition().x!,
@@ -138,7 +132,7 @@ const ClipRect = forwardRef<{
   );
 
   return (
-    <Group >
+    <Group>
       <Transformer ref={trRef} rotateEnabled={false} boundBoxFunc={handelResize} />
       <Rect ref={reRef} draggable={true} onDragMove={hanldeDragMove} />
     </Group>
