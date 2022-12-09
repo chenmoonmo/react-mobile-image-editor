@@ -8,6 +8,8 @@ import useHistory from 'utils/hooks/useHistory';
 import { ReactComponent as IconRotate } from 'assets/icons/icon-rotate.svg';
 import { getImageSize, rotatePoint } from 'utils/utils';
 import { useAnchor } from 'utils/hooks/useAnchor';
+import image2 from '../../image.png';
+import useImage from 'use-image';
 
 type ClipStageProps = {
   onCutDone: (size: any, rotation: number) => unknown;
@@ -53,6 +55,8 @@ const InputActions = styled.div`
 const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const { image, texts, lines, group, clipRect } = useHistory();
   let { width, height, handleSelectTool } = useEditor();
+
+  const [fillimage] = useImage(image2);
 
   const drawAnchors = useAnchor();
 
@@ -154,12 +158,15 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
             {lines.map((line, index) => (
               <Line key={index} {...line} />
             ))}
+            {/* TODO： 三等分线 */}
             <Rect
               ref={reRef}
               x={clipInfo.x}
               y={clipInfo.y}
               width={clipInfo.width}
               height={clipInfo.height}
+              // fillPatternImage={fillimage}
+              // fillPriority='pattern'
               fill='green'
               opacity={0.3}
               onTransformEnd={handleTransformEnd}

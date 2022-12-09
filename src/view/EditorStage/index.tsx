@@ -9,6 +9,7 @@ import Toolbar from 'view/Toolbar';
 import { getImageSize, getPosition, rotatePoint } from 'utils/utils';
 import ClipStage from 'view/ClipStage';
 import { Box } from 'konva/lib/shapes/Transformer';
+import { flushSync } from 'react-dom';
 
 type EditorProps = {
   image: string;
@@ -46,8 +47,6 @@ const EditorStage: ComponentType<EditorProps> = () => {
 
   const stage = useRef<Konva.Stage>(null);
   const layer = useRef<Konva.Layer>(null);
-
-  const clipGroup = useRef<Konva.Group>(null);
 
   const scaleGroup = useRef<Konva.Group>(null);
   const currentImage = useRef<Konva.Image | null>(null);
@@ -144,8 +143,8 @@ const EditorStage: ComponentType<EditorProps> = () => {
   };
   // TODO: ts
   const handleCut = (clipInfo: any, rotation: number) => {
-    handleSelectTool(null);
     setImage(clipInfo, rotation);
+    handleSelectTool(null);
   };
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -216,31 +215,32 @@ const EditorStage: ComponentType<EditorProps> = () => {
         onTouchEnd={handleTouchEnd}
       >
         <Layer ref={layer}>
-          {/* clip group */}
-          <Group id='clip' ref={clipGroup}>
-            <Rect width={width} height={height} x={0} y={0} fill='red' />
-            {/* scale group */}
-            <Group
-              id='scale'
-              ref={scaleGroup}
-              x={groupX}
-              y={groupY}
-              width={group.width}
-              height={group.height}
-              scale={{
-                x: basicScaleRatio,
-                y: basicScaleRatio,
-              }}
-              rotation={group.rotation}
-            >
-              <Image ref={currentImage} image={image} width={group.width} height={group.height} />
-              {texts.map((text, index) => (
-                <Text key={index} draggable {...text} />
-              ))}
-              {lines.map((line, index) => (
-                <Line key={index} {...line} />
-              ))}
-            </Group>
+          {/* <Rect width={width} height={height} x={0} y={0} fill='red' /> */}
+          {/* scale group */}
+          <Group
+            id='scale'
+            ref={scaleGroup}
+            x={groupX}
+            y={groupY}
+            width={group.width}
+            height={group.height}
+            scale={{
+              x: basicScaleRatio,
+              y: basicScaleRatio,
+            }}
+            rotation={group.rotation}
+            clipX={clipRect.x}
+            clipY={clipRect.y}
+            clipHeight={clipRect.height}
+            clipWidth={clipRect.width}
+          >
+            <Image ref={currentImage} image={image} width={group.width} height={group.height} />
+            {texts.map((text, index) => (
+              <Text key={index} draggable {...text} />
+            ))}
+            {lines.map((line, index) => (
+              <Line key={index} {...line} />
+            ))}
           </Group>
         </Layer>
       </Stage>
