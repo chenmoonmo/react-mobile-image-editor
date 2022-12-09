@@ -1,19 +1,24 @@
 import Konva from 'konva';
 import React from 'react';
 
+type ShapeType = {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+};
+
 export type HistoryContextType = {
-  image: {
-    image: any;
-    width?: number;
-    height?: number;
-    x?: number;
-    y?: number;
-    scale?: number;
+  image: any;
+  group: ShapeType & {
+    rotation: number;
   };
+  clipRect: ShapeType;
+
   texts: Konva.TextConfig[];
   lines: Konva.LineConfig[];
   blurs: Konva.ImageConfig[];
-  group: Konva.GroupConfig;
+
   setLines: (
     callback: (lines: HistoryContextType['lines']) => HistoryContextType['lines']
   ) => unknown;
@@ -22,7 +27,7 @@ export type HistoryContextType = {
   ) => unknown;
   setImage: (
     imageConfig: Partial<HistoryContextType['image']>,
-    groupConfig?: HistoryContextType['group']
+    groupConfig: Partial<HistoryContextType['group']>
   ) => unknown;
   setGroup: (groupConfig: HistoryContextType['group']) => unknown;
   redo: () => unknown;
@@ -30,13 +35,23 @@ export type HistoryContextType = {
 };
 
 const EditorContext = React.createContext<HistoryContextType>({
-  image: {
-    image: '',
+  image: null,
+  group: {
+    width: 0,
+    height: 0,
+    x: 0,
+    y: 0,
+    rotation: 0,
+  },
+  clipRect: {
+    width: 0,
+    height: 0,
+    x: 0,
+    y: 0,
   },
   texts: [],
   lines: [],
   blurs: [],
-  group: {},
   setLines: () => {},
   setTexts: () => {},
   setImage: () => {},

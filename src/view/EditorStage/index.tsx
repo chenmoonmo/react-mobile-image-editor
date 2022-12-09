@@ -1,12 +1,12 @@
 import { Layer, Stage, Line, Image, Text, Group, Rect } from 'react-konva';
 
-import React, { ComponentType, useEffect, useRef } from 'react';
+import React, { ComponentType, useMemo, useRef } from 'react';
 import Konva from 'konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import styled from '@emotion/styled';
 import Toolbar from 'view/Toolbar';
-import { getImageSize, getPosition,getCenterOfPoint } from 'utils/utils';
+import { getImageSize, getPosition } from 'utils/utils';
 import ClipStage from 'view/ClipStage';
 import { Box } from 'konva/lib/shapes/Transformer';
 
@@ -41,8 +41,8 @@ const StageContainer = styled.div`
 `;
 
 const EditorStage: ComponentType<EditorProps> = () => {
-  const { width, height, activeTool, pencilConfig, handleSelectTool } = useEditor();
-  const { image, texts, lines, group, setLines, setImage } = useHistory();
+  const { width, height, activeTool, pencilConfig, textConfig, handleSelectTool } = useEditor();
+  const { image, texts, lines, group, clipRect, setLines, setTexts, setImage } = useHistory();
 
   const stage = useRef<Konva.Stage>(null);
   const layer = useRef<Konva.Layer>(null);
@@ -52,6 +52,35 @@ const EditorStage: ComponentType<EditorProps> = () => {
   const scaleGroup = useRef<Konva.Group>(null);
   const currentImage = useRef<Konva.Image | null>(null);
   const currentLine = useRef<Konva.Line | null>(null);
+
+  const basicScaleRatio = useMemo(() => {
+    const [clipContainWidth, clipContainHeight] = getImageSize(
+      clipRect.width,
+      clipRect.height,
+      width,
+      height
+    );
+    return Math.min(clipContainWidth / clipRect.width, clipContainHeight / clipRect.height);
+  }, [clipRect]);
+
+  const [dx, dy] = useMemo(() => {
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    const clipCenterX =
+      group.x + clipRect.x * basicScaleRatio + (clipRect.width * basicScaleRatio) / 2;
+
+    const clipCenterY =
+      group.y + clipRect.y * basicScaleRatio + (clipRect.height * basicScaleRatio) / 2;
+
+    const dx = isNaN(clipCenterX - centerX) ? 0 : clipCenterX - centerX;
+    const dy = isNaN(clipCenterY - centerY) ? 0 : clipCenterY - centerY;
+
+    return [dx, dy];
+  }, [height, width, group, clipRect, basicScaleRatio]);
+
+  const groupX = group.x - dx;
+  const groupY = group.y - dy;
 
   const handleDrawStart = () => {
     const pos = stage.current?.getPointerPosition()!;
@@ -87,10 +116,10 @@ const EditorStage: ComponentType<EditorProps> = () => {
         ...preLines,
         {
           ...pencilConfig,
-          scaleX: 1 / group.scaleX!,
-          scaleY: 1 / group.scaleY!,
-          x: -group.x! / group.scaleX!,
-          y: -group.y! / group.scaleY!,
+          scaleX: 1 / basicScaleRatio,
+          scaleY: 1 / basicScaleRatio,
+          x: -groupX / basicScaleRatio,
+          y: -groupY / basicScaleRatio,
           points: lastLine?.points(),
         },
       ];
@@ -99,6 +128,21 @@ const EditorStage: ComponentType<EditorProps> = () => {
       currentLine.current?.destroy();
       currentLine.current = null;
     }, 50);
+  };
+
+  const handleTextAdd = (words: string) => {
+    const textWidth = words.length * 15 > textConfig!.width ? textConfig.width : words.length * 15;
+    setTexts((preTexts) => [
+      ...preTexts,
+      {
+        ...textConfig,
+        text: words,
+        scaleX: 1 / basicScaleRatio,
+        scaleY: 1 / basicScaleRatio,
+        x: (clipRect.width - textWidth) / 2 / basicScaleRatio,
+        y: clipRect.height / basicScaleRatio / 2,
+      },
+    ]);
   };
 
   const handleCutStart = () => {
@@ -126,20 +170,18 @@ const EditorStage: ComponentType<EditorProps> = () => {
     const [imageWidth, imageHeight] = getImageSize(clipSize.width, clipSize.height, width, height);
     const scaleRatio = (imageWidth / clipSize.width + imageHeight / clipSize.height) / 2;
     const [selectionX, selectionY] = getPosition(imageWidth, imageHeight, width, height);
-    console.log(scaleGroup.current)
+    console.log(scaleGroup.current);
     setImage(
       {},
       {
         x: -clipSize.x * scaleRatio! + selectionX,
         y: -clipSize.y * scaleRatio! + selectionY,
-        scaleX: (group.scaleX ?? 1) * scaleRatio,
-        scaleY: (group.scaleY ?? 1) * scaleRatio,
-        clip: {
-          x: selectionX,
-          y: selectionY,
-          width: imageWidth,
-          height: imageHeight,
-        },
+        // clip: {
+        //   x: selectionX,
+        //   y: selectionY,
+        //   width: imageWidth,
+        //   height: imageHeight,
+        // },
       }
     );
   };
@@ -166,7 +208,6 @@ const EditorStage: ComponentType<EditorProps> = () => {
     // };
     // const rotatedAttrs = rotateAroundCenter(attrs, 90);
     // currentImage.current?.setAttrs(rotatedAttrs);
-
     // console.log(scaleGroup.current?.width());
     // console.log(scaleGroup.current?.height());
   };
@@ -240,25 +281,26 @@ const EditorStage: ComponentType<EditorProps> = () => {
       >
         <Layer ref={layer}>
           {/* clip group */}
-          <Group id='clip' ref={clipGroup} clip={group.clip}>
+          <Group
+            id='clip'
+            ref={clipGroup}
+            //  clip={group.clip}
+          >
             <Rect width={width} height={height} x={0} y={0} fill='red' />
             {/* scale group */}
             <Group
               id='scale'
               ref={scaleGroup}
-              offsetX={0}
-              offsetY={0}
-              scaleX={group.scaleX}
-              scaleY={group.scaleY}
-              x={group.x}
-              y={group.y}
+              x={groupX}
+              y={groupY}
+              width={group.width}
+              height={group.height}
+              scale={{
+                x: basicScaleRatio,
+                y: basicScaleRatio,
+              }}
             >
-              <Image
-                ref={currentImage}
-                image={image.image}
-                width={image.width}
-                height={image.height}
-              />
+              <Image ref={currentImage} image={image} width={group.width} height={group.height} />
               {texts.map((text, index) => (
                 <Text key={index} draggable {...text} />
               ))}
@@ -267,11 +309,10 @@ const EditorStage: ComponentType<EditorProps> = () => {
               ))}
             </Group>
           </Group>
-          {/* {activeTool === 'Cut' && <ClipRect ref={clipRef} />} */}
         </Layer>
       </Stage>
       {activeTool === 'Cut' && <ClipStage onCutDone={handleCut} />}
-      <Toolbar />
+      <Toolbar onAddText={handleTextAdd} />
     </StageContainer>
   );
 };

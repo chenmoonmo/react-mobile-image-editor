@@ -1,4 +1,4 @@
-import { ComponentType, ReactNode, useEffect, useRef, useState } from 'react';
+import { ComponentType, ReactNode, useLayoutEffect, useRef, useState } from 'react';
 import HistroyContext, { HistoryContextType } from 'utils/context/HistroyContext';
 import { History } from 'stateshot';
 import useImage from 'use-image';
@@ -10,19 +10,36 @@ type HistoryProviderProps = {
   image: string;
 };
 
+type HistoryState = Pick<
+  HistoryContextType,
+  'blurs' | 'image' | 'lines' | 'texts' | 'group' | 'clipRect'
+>;
+
+type UpdateCallback<T> = (param: T) => T;
+
+type UpdateFunction<T> = (callback: UpdateCallback<T>) => unknown;
+
 const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image: imageUrl }) => {
   const { width, height } = useEditor();
 
-  const [state, setState] = useState<
-    Pick<HistoryContextType, 'blurs' | 'image' | 'lines' | 'texts' | 'group'>
-  >({
-    image: {
-      image: '',
+  const [state, setState] = useState<HistoryState>({
+    image: null,
+    group: {
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 0,
+      rotation: 0,
+    },
+    clipRect: {
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 0,
     },
     lines: [],
     texts: [],
     blurs: [],
-    group: {},
   });
 
   const stateRef = useRef(state);
@@ -30,9 +47,7 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
 
   const [mainImage, imageStatus] = useImage(imageUrl);
 
-  const handleDataChange = (
-    state: Pick<HistoryContextType, 'blurs' | 'image' | 'lines' | 'texts' | 'group'>
-  ) => {
+  const handleDataChange = (state: HistoryState) => {
     console.log('historyChange', state);
     setState(state);
     stateRef.current = state;
@@ -40,18 +55,14 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
 
   const history = useRef<History>();
 
-  const handleLineChange = (
-    callback: (lines: HistoryContextType['lines']) => HistoryContextType['lines']
-  ) => {
+  const handleLineChange: UpdateFunction<HistoryContextType['lines']> = (callback) => {
     history.current?.push({
       ...stateRef.current,
       lines: callback(stateRef.current.lines),
     });
   };
 
-  const handleTextChange = (
-    callback: (texts: HistoryContextType['texts']) => HistoryContextType['texts']
-  ) => {
+  const handleTextChange: UpdateFunction<HistoryContextType['texts']> = (callback) => {
     history.current?.push({
       ...stateRef.current,
       texts: callback(stateRef.current.texts),
@@ -59,12 +70,12 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
   };
 
   const handleImagechange = (
-    imageConfig: Partial<HistoryContextType['image']>,
-    groupConfig: HistoryContextType['group'] = {}
+    image: Partial<HistoryContextType['image']>,
+    groupConfig: Partial<HistoryContextType['group']>
   ) => {
     history.current?.push({
       ...stateRef.current,
-      image: Object.assign({}, stateRef.current.image, { ...imageConfig }),
+      image,
       group: Object.assign({}, stateRef.current.group, groupConfig),
     });
   };
@@ -84,7 +95,7 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
     history.current?.undo().get();
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (imageStatus === 'loaded' && mainImage) {
       const [imageWidth, imageHeight] = getImageSize(
         mainImage.width,
@@ -93,30 +104,17 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
         height
       );
 
-      const initalImage = {
-        image: mainImage,
-        width: imageWidth,
-        height: imageHeight,
-      };
-
-      const initalGroup = {
-        x: (width - imageWidth) / 2,
-        y: (height - imageHeight) / 2,
-        scaleX: 1,
-        scaleY: 1,
-        clip: {
-          x: (width - imageWidth) / 2,
-          y: (height - imageHeight) / 2,
-          width: imageWidth,
-          height: imageHeight,
-        },
-      };
-
       history.current = new History({
         initialState: {
           ...stateRef.current,
-          image: initalImage,
-          group: initalGroup,
+          image: mainImage,
+          group: {
+            width: imageWidth,
+            height: imageHeight,
+            x: 0,
+            y: 0,
+            rotation: 0,
+          },
         },
         useChunks: false,
         delay: 0,
@@ -126,13 +124,24 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
       setState((preVal) => {
         return {
           ...preVal,
-          image: initalImage,
-          group: initalGroup,
+          image: mainImage,
+          group: {
+            width: imageWidth,
+            height: imageHeight,
+            x: 0,
+            y: 0,
+            rotation: 0,
+          },
+          clipRect: {
+            width: imageWidth,
+            height: imageHeight,
+            x: 0,
+            y: 0,
+          },
         };
       });
 
       console.log(history.current);
-      console.log(initalImage);
     }
   }, [imageStatus]);
 

@@ -13,7 +13,7 @@ import useWordInput from 'utils/hooks/useWordInput';
 import { ToolUnion } from 'utils/constants';
 
 type ToolBarProps = {
-
+  onAddText: (word: string) => unknown;
 };
 
 const ToolsMap: { icon: ReactNode; name: ToolUnion }[] = [
@@ -97,32 +97,16 @@ const ColorSelector = styled.div`
   padding: 0 30px;
 `;
 
-const Toolbar: ComponentType<ToolBarProps> = ({ }) => {
-  const { textConfig, activeTool, pencilConfig, editorColors, handleSelectTool, changeColor } =
-    useEditor();
+const Toolbar: ComponentType<ToolBarProps> = ({ onAddText }) => {
+  const { activeTool, pencilConfig, editorColors, handleSelectTool, changeColor } = useEditor();
 
-  const { group, redo, undo, setTexts } = useHistory();
+  const { undo } = useHistory();
 
   const { startInput } = useWordInput();
 
   const isColorSelectorShow = useMemo(() => {
     return ['Pencil'].includes(activeTool!);
   }, [activeTool]);
-
-  const handleTextAdd = (words: string) => {
-    const textWidth = words.length * 15 > textConfig!.width ? textConfig.width : words.length * 15;
-    setTexts((preTexts) => [
-      ...preTexts,
-      {
-        ...textConfig,
-        text: words,
-        scaleX: 1 / group.scaleX!,
-        scaleY: 1 / group.scaleY!,
-        x: (group.clip.width - textWidth) / 2 / group.scaleX!,
-        y: group.clip.height / group.scaleX! / 2,
-      },
-    ]);
-  };
 
   const handleToolSelect = (tool: ToolUnion) => {
     switch (tool) {
@@ -131,7 +115,7 @@ const Toolbar: ComponentType<ToolBarProps> = ({ }) => {
         break;
       case 'Words':
         handleSelectTool('Words');
-        startInput('', handleTextAdd);
+        startInput('', onAddText);
         break;
       case 'Cut':
         // onCutStart?.();
