@@ -69,14 +69,10 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
     });
   };
 
-  const handleImagechange = (
-    image: Partial<HistoryContextType['image']>,
-    groupConfig: Partial<HistoryContextType['group']>
-  ) => {
+  const handleImagechange = (groupConfig: Partial<HistoryContextType['clipRect']>) => {
     history.current?.push({
       ...stateRef.current,
-      image,
-      group: Object.assign({}, stateRef.current.group, groupConfig),
+      clipRect: Object.assign({}, stateRef.current.group, groupConfig),
     });
   };
 
@@ -114,6 +110,12 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
             x: 0,
             y: 0,
             rotation: 0,
+          },
+          clipRect: {
+            width: imageWidth,
+            height: imageHeight,
+            x: 0,
+            y: 0,
           },
         },
         useChunks: false,

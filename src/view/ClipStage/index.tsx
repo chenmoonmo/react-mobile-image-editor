@@ -6,11 +6,11 @@ import { Group, Rect, Stage, Layer, Image, Text, Line, Transformer } from 'react
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import { ReactComponent as IconRotate } from 'assets/icons/icon-rotate.svg';
-import { getImageSize } from 'utils/utils';
+import { getImageSize, rotatePoint } from 'utils/utils';
 import { usePrevious } from 'utils/hooks/usePrevious';
 
 type ClipStageProps = {
-  onCutDone: (size: Box) => void;
+  onCutDone: (size: any) => void;
 };
 
 const ClipContainer = styled.div`
@@ -63,36 +63,39 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const reRef = useRef<Konva.Rect>(null);
   const trRef = useRef<Konva.Transformer>(null);
 
-  const [groupInfo, setGroupInfo] = useState(group);
-
   const [clipInfo, setClipInfo] = useState(clipRect);
+  const [rotation, setRotaion] = useState(group.rotation);
 
   const basicScaleRatio = useMemo(() => {
-    const [clipContainWidth, clipContainHeight] = getImageSize(
-      clipInfo.width,
-      clipInfo.height,
-      width,
-      height
-    );
+    const rotationStage = ((rotation / 90) % 4) + 1;
+    let containerSize = [width, height] as const;
+    console.log(rotationStage);
+    if (rotationStage % 2 === 0) {
+      containerSize = [height, width];
+    }
+    const [clipContainWidth] = getImageSize(clipInfo.width, clipInfo.height, ...containerSize);
     return clipContainWidth / clipInfo.width;
-  }, [clipInfo]);
+  }, [clipInfo, rotation]);
 
+  // TODO: 根据 rotation 来计算
   const [dx, dy] = useMemo(() => {
     const centerX = width / 2;
     const centerY = height / 2;
 
-    const clipCenterX = groupInfo.x + (clipInfo.x + clipInfo.width / 2) * basicScaleRatio;
+    const clipCenterX = group.x + (clipInfo.x + clipInfo.width / 2) * basicScaleRatio;
 
-    const clipCenterY = groupInfo.y + (clipInfo.y + clipInfo.height / 2) * basicScaleRatio;
+    const clipCenterY = group.y + (clipInfo.y + clipInfo.height / 2) * basicScaleRatio;
 
-    const dx = isNaN(clipCenterX - centerX) ? 0 : clipCenterX - centerX;
-    const dy = isNaN(clipCenterY - centerY) ? 0 : clipCenterY - centerY;
+    const [rdx, rdy] = rotatePoint(clipCenterX, clipCenterY, rotation);
+
+    const dx = isNaN(clipCenterX - centerX) ? 0 : rdx - centerX;
+    const dy = isNaN(clipCenterY - centerY) ? 0 : rdy - centerY;
 
     return [dx, dy];
-  }, [groupInfo, clipInfo, basicScaleRatio]);
+  }, [group, clipInfo, rotation, basicScaleRatio]);
 
-  const groupX = groupInfo.x - dx;
-  const groupY = groupInfo.y - dy;
+  const groupX = group.x - dx;
+  const groupY = group.y - dy;
 
   const handelResize = (oldBox: Box, newBox: Box) => {
     return newBox;
@@ -114,20 +117,16 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   };
 
   const handleCutDown = () => {
-    onCutDone({
-      x: trRef.current?.x()! - group.x!,
-      y: trRef.current?.y()! - group.y!,
-      width: trRef.current?.width()!,
-      height: trRef.current?.height()!,
-      rotation: trRef.current?.rotation()!,
-    });
+    onCutDone(clipInfo);
   };
 
   const hanldeCutCancel = () => {
     handleSelectTool(null);
   };
 
-  const hanldeRotate = () => {};
+  const hanldeRotate = () => {
+    setRotaion((preRotation) => preRotation + 90);
+  };
 
   useLayoutEffect(() => {
     trRef.current?.nodes([reRef.current!]);
@@ -141,17 +140,13 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
             ref={scaleGroup}
             x={groupX}
             y={groupY}
-            width={groupInfo.width}
-            height={groupInfo.height}
+            width={group.width}
+            height={group.height}
             scaleX={basicScaleRatio}
             scaleY={basicScaleRatio}
+            rotation={rotation}
           >
-            <Image
-              ref={currentImage}
-              image={image}
-              width={groupInfo.width}
-              height={groupInfo.height}
-            />
+            <Image ref={currentImage} image={image} width={group.width} height={group.height} />
             {texts.map((text, index) => (
               <Text key={index} draggable {...text} />
             ))}
@@ -169,7 +164,12 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
               onTransformEnd={handleTransformEnd}
             />
           </Group>
-          <Transformer ref={trRef} rotateEnabled={false} boundBoxFunc={handelResize} />
+          <Transformer
+            ref={trRef}
+            rotateEnabled={false}
+            anchorCornerRadius={10}
+            boundBoxFunc={handelResize}
+          />
         </Layer>
       </Stage>
       <InputActions>

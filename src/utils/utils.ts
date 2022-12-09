@@ -1,5 +1,3 @@
-import Konva from 'konva';
-
 export const getImageSize = (
   imageWidth: number,
   imageHeight: number,
@@ -22,3 +20,9 @@ export const getPosition = (
   return [(width - imageWidth) / 2, (height - imageHeight) / 2] as const;
 };
 
+export function rotatePoint(x: number, y: number, r: number) {
+  const rRadians = r * (Math.PI / 180);
+  const xOffset = x * Math.cos(rRadians) - y * Math.sin(rRadians);
+  const yOffset = x * Math.sin(rRadians) + y * Math.cos(rRadians);
+  return [xOffset, yOffset];
+}

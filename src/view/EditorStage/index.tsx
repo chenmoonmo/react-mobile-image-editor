@@ -54,30 +54,23 @@ const EditorStage: ComponentType<EditorProps> = () => {
   const currentLine = useRef<Konva.Line | null>(null);
 
   const basicScaleRatio = useMemo(() => {
-    const [clipContainWidth, clipContainHeight] = getImageSize(
-      clipRect.width,
-      clipRect.height,
-      width,
-      height
-    );
-    return Math.min(clipContainWidth / clipRect.width, clipContainHeight / clipRect.height);
+    const [clipContainWidth] = getImageSize(clipRect.width, clipRect.height, width, height);
+    return clipContainWidth / clipRect.width;
   }, [clipRect]);
 
   const [dx, dy] = useMemo(() => {
     const centerX = width / 2;
     const centerY = height / 2;
 
-    const clipCenterX =
-      group.x + clipRect.x * basicScaleRatio + (clipRect.width * basicScaleRatio) / 2;
+    const clipCenterX = group.x + (clipRect.x + clipRect.width / 2) * basicScaleRatio;
 
-    const clipCenterY =
-      group.y + clipRect.y * basicScaleRatio + (clipRect.height * basicScaleRatio) / 2;
+    const clipCenterY = group.y + (clipRect.y + clipRect.height / 2) * basicScaleRatio;
 
     const dx = isNaN(clipCenterX - centerX) ? 0 : clipCenterX - centerX;
     const dy = isNaN(clipCenterY - centerY) ? 0 : clipCenterY - centerY;
 
     return [dx, dy];
-  }, [height, width, group, clipRect, basicScaleRatio]);
+  }, [group, clipRect, basicScaleRatio]);
 
   const groupX = group.x - dx;
   const groupY = group.y - dy;
@@ -109,8 +102,6 @@ const EditorStage: ComponentType<EditorProps> = () => {
 
   const handleDrawEnd = () => {
     const lastLine = currentLine.current;
-    console.log(lastLine?.getRelativePointerPosition());
-
     setLines((preLines) => {
       return [
         ...preLines,
@@ -144,72 +135,10 @@ const EditorStage: ComponentType<EditorProps> = () => {
       },
     ]);
   };
-
-  const handleCutStart = () => {
-    // clipGroup.current?.scaleX(0.93);
-    // clipGroup.current?.scaleY(0.93);
-    // clipGroup.current?.x((width * 0.07) / 2);
-    // clipGroup.current?.y((height * 0.07) / 2);
-    // const scaleRatio = scaleGroup.current?.scaleX()! * 0.93;
-    // scaleGroup.current?.scaleX(scaleRatio);
-    // scaleGroup.current?.scaleY(scaleRatio);
-    // console.log(scaleRatio, group.clip.width);
-    // scaleGroup.current?.x(group.x! + (0.07 / 2) * group.clip.width);
-    // scaleGroup.current?.y(group.y! + (0.07 / 2) * group.clip.height);
-    // clipGroup.current?.clip({
-    //   x: group.clip.x! + (group.clip.width! * 0.07) / 2,
-    //   y: group.clip.y! + (group.clip.height! * 0.07) / 2,
-    //   width: group.clip.width! * 0.93,
-    //   height: group.clip.height! * 0.93,
-    // });
-  };
-
-  const handleCut = (clipSize: Box) => {
-    console.log(clipSize);
+  // TODO: ts
+  const handleCut = (clipInfo: any) => {
     handleSelectTool(null);
-    const [imageWidth, imageHeight] = getImageSize(clipSize.width, clipSize.height, width, height);
-    const scaleRatio = (imageWidth / clipSize.width + imageHeight / clipSize.height) / 2;
-    const [selectionX, selectionY] = getPosition(imageWidth, imageHeight, width, height);
-    console.log(scaleGroup.current);
-    setImage(
-      {},
-      {
-        x: -clipSize.x * scaleRatio! + selectionX,
-        y: -clipSize.y * scaleRatio! + selectionY,
-        // clip: {
-        //   x: selectionX,
-        //   y: selectionY,
-        //   width: imageWidth,
-        //   height: imageHeight,
-        // },
-      }
-    );
-  };
-
-  const handleCutCacenl = () => {
-    // scaleGroup.current?.scaleX(scaleGroup.current?.scaleX() / 0.93);
-    // scaleGroup.current?.scaleY(scaleGroup.current?.scaleX() / 0.93);
-    // scaleGroup.current?.x(group.x!);
-    // scaleGroup.current?.y(group.y!);
-    // clipGroup.current?.clip(group.clip);
-    // clipGroup.current?.scaleX(0.93);
-    // clipGroup.current?.scaleY(0.93);
-    // clipGroup.current?.x((width * 0.07) / 2);
-    // clipGroup.current?.y((height * 0.07) / 2);
-  };
-
-  const handleRota = () => {
-    // const attrs = {
-    //   x: currentImage.current?.x(),
-    //   y: currentImage.current?.y(),
-    //   width: currentImage.current?.width(),
-    //   height: currentImage.current?.height(),
-    //   rotation: currentImage.current?.rotation(),
-    // };
-    // const rotatedAttrs = rotateAroundCenter(attrs, 90);
-    // currentImage.current?.setAttrs(rotatedAttrs);
-    // console.log(scaleGroup.current?.width());
-    // console.log(scaleGroup.current?.height());
+    setImage(clipInfo);
   };
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -281,11 +210,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
       >
         <Layer ref={layer}>
           {/* clip group */}
-          <Group
-            id='clip'
-            ref={clipGroup}
-            //  clip={group.clip}
-          >
+          <Group id='clip' ref={clipGroup}>
             <Rect width={width} height={height} x={0} y={0} fill='red' />
             {/* scale group */}
             <Group
