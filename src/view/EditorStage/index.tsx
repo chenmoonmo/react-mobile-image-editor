@@ -144,7 +144,9 @@ const EditorStage: ComponentType<EditorProps> = () => {
   // TODO: ts
   const handleCut = (clipInfo: any, rotation: number) => {
     setImage(clipInfo, rotation);
-    handleSelectTool(null);
+    setTimeout(() => {
+      handleSelectTool(null);
+    }, 50);
   };
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -214,7 +216,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
         onMouseUp={handleMouseUp}
         onTouchEnd={handleTouchEnd}
       >
-        <Layer ref={layer}>
+        <Layer ref={layer} >
           {/* <Rect width={width} height={height} x={0} y={0} fill='red' /> */}
           {/* scale group */}
           <Group

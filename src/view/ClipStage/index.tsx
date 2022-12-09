@@ -6,10 +6,11 @@ import { Group, Rect, Stage, Layer, Image, Text, Line, Transformer } from 'react
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import { ReactComponent as IconRotate } from 'assets/icons/icon-rotate.svg';
-import { getImageSize, rotatePoint } from 'utils/utils';
+import { getCenter, getDistance, getImageSize, Point, rotatePoint } from 'utils/utils';
 import { useAnchor } from 'utils/hooks/useAnchor';
 import image2 from '../../image.png';
 import useImage from 'use-image';
+import { userInfo } from 'os';
 
 type ClipStageProps = {
   onCutDone: (size: any, rotation: number) => unknown;
@@ -63,8 +64,13 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const scaleGroup = useRef<Konva.Group>(null);
   const currentImage = useRef<Konva.Image | null>(null);
 
+  const stageRef = useRef<Konva.Stage>(null);
+
   const reRef = useRef<Konva.Rect>(null);
   const trRef = useRef<Konva.Transformer>(null);
+
+  const lastCenter = useRef<Point | null>(null);
+  const lastDist = useRef(0);
 
   const [clipInfo, setClipInfo] = useState(clipRect);
   const [rotation, setRotaion] = useState(group.rotation);
@@ -130,6 +136,73 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
     setRotaion((preRotation) => preRotation + 90);
   };
 
+  // TODO: 缩放和图片裁剪位置关系
+  const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
+    e.evt.preventDefault();
+    const touch1 = e.evt.touches[0];
+    const touch2 = e.evt.touches[1];
+
+    if (touch1 && touch2) {
+      // if the stage was under Konva's drag&drop
+      // we need to stop it, and implement our own pan logic with two pointers
+      if (stageRef.current?.isDragging()) {
+        stageRef.current?.stopDrag();
+      }
+
+      var p1 = {
+        x: touch1.clientX,
+        y: touch1.clientY,
+      };
+      var p2 = {
+        x: touch2.clientX,
+        y: touch2.clientY,
+      };
+
+      if (!lastCenter.current) {
+        lastCenter.current = getCenter(p1, p2);
+        return;
+      }
+      var newCenter = getCenter(p1, p2);
+
+      var dist = getDistance(p1, p2);
+
+      if (!lastDist.current) {
+        lastDist.current = dist;
+      }
+
+      // local coordinates of center point
+
+      var pointTo = {
+        x: (newCenter.x - currentImage.current?.x()!) / currentImage.current?.scaleX()!,
+        y: (newCenter.y - currentImage.current?.y()!) / currentImage.current?.scaleX()!,
+      };
+
+      var scale = currentImage.current?.scaleX()! * (dist / lastDist.current);
+
+      currentImage.current?.scaleX(scale);
+      currentImage.current?.scaleY(scale);
+
+      // calculate new position of the stage
+      var dx = newCenter.x - lastCenter.current.x;
+      var dy = newCenter.y - lastCenter.current.y;
+
+      var newPos = {
+        x: newCenter.x - pointTo.x * scale + dx,
+        y: newCenter.y - pointTo.y * scale + dy,
+      };
+
+      currentImage.current?.position(newPos);
+
+      lastDist.current = dist;
+      lastCenter.current = newCenter;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    lastDist.current = 0;
+    lastCenter.current = null;
+  };
+
   useLayoutEffect(() => {
     trRef.current?.nodes([reRef.current!]);
     // TODO: 修改绘制函数
@@ -138,7 +211,19 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   return (
     <ClipContainer>
-      <Stage width={width} height={height}>
+      <Stage
+        ref={stageRef}
+        width={width}
+        height={height}
+        scale={{
+          x: 0.96,
+          y: 0.96,
+        }}
+        x={width * 0.02}
+        y={height * 0.02}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <Layer>
           {/* TODO: 允许平移图片 和 双指缩放 */}
           <Group
@@ -151,14 +236,17 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
             scaleY={basicScaleRatio}
             rotation={rotation}
           >
-            <Image ref={currentImage} image={image} width={group.width} height={group.height} />
-            {texts.map((text, index) => (
-              <Text key={index} draggable {...text} />
-            ))}
-            {lines.map((line, index) => (
-              <Line key={index} {...line} />
-            ))}
+            <Group draggable={true}>
+              <Image ref={currentImage} image={image} width={group.width} height={group.height} />
+              {texts.map((text, index) => (
+                <Text key={index} draggable {...text} />
+              ))}
+              {lines.map((line, index) => (
+                <Line key={index} {...line} />
+              ))}
+            </Group>
             {/* TODO： 三等分线 */}
+
             <Rect
               ref={reRef}
               x={clipInfo.x}
