@@ -8,6 +8,7 @@ import useHistory from 'utils/hooks/useHistory';
 import { ReactComponent as IconRotate } from 'assets/icons/icon-rotate.svg';
 import { getImageSize, rotatePoint } from 'utils/utils';
 import { usePrevious } from 'utils/hooks/usePrevious';
+import { useAnchor } from 'utils/hooks/useAnchor';
 
 type ClipStageProps = {
   onCutDone: (size: any) => void;
@@ -54,6 +55,8 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const { image, texts, lines, group, clipRect } = useHistory();
   let { width, height, handleSelectTool } = useEditor();
 
+  const drawAnchors = useAnchor();
+
   const stage = useRef<Konva.Stage>(null);
   const layer = useRef<Konva.Layer>(null);
 
@@ -65,6 +68,26 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   const [clipInfo, setClipInfo] = useState(clipRect);
   const [rotation, setRotaion] = useState(group.rotation);
+
+  const anchorShapeCanvas = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 24;
+    canvas.height = 24;
+    const ctx = canvas.getContext('2d')!;
+    ctx.strokeStyle = '#0096FF';
+    ctx.fillStyle = '#0096FF';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.lineTo(10, 10);
+    ctx.lineTo(24, 10);
+    ctx.lineTo(24, 12);
+    ctx.lineTo(12, 12);
+    ctx.lineTo(12, 24);
+    ctx.lineTo(10, 24);
+    ctx.closePath();
+    ctx.fill();
+    return canvas;
+  }, []);
 
   const basicScaleRatio = useMemo(() => {
     const rotationStage = ((rotation / 90) % 4) + 1;
@@ -130,6 +153,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   useLayoutEffect(() => {
     trRef.current?.nodes([reRef.current!]);
+    drawAnchors(trRef.current!);
   }, []);
 
   return (
@@ -167,7 +191,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
           <Transformer
             ref={trRef}
             rotateEnabled={false}
-            anchorCornerRadius={10}
+            anchorSize={24}
             boundBoxFunc={handelResize}
           />
         </Layer>
