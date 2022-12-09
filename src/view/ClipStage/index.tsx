@@ -1,12 +1,66 @@
 import styled from '@emotion/styled';
 import Konva from 'konva';
 import { Box } from 'konva/lib/shapes/Transformer';
-import { ComponentType, useEffect, useRef, useState } from 'react';
+import { ComponentType, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Group, Rect, Stage, Layer, Image, Text, Line, Transformer } from 'react-konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import { ReactComponent as IconRotate } from 'assets/icons/icon-rotate.svg';
-import { getImageSize, getPosition, rotateAroundCenter, rotateAroundPoint } from 'utils/utils';
+import { getCenterOfPoint, getImageSize, getPosition, rotateAroundPoint } from 'utils/utils';
+
+const calculateScale = (
+  rotation: number,
+  containerWidth: number,
+  containerHeight: number,
+  imageWidth: number,
+  imageHeight: number
+) => {
+  // 旋转后的图片宽高
+  const rotatedWidth = rotation % 180 === 0 ? imageWidth : imageHeight;
+  const rotatedHeight = rotation % 180 === 0 ? imageHeight : imageWidth;
+
+  const [scaledWidth, scaledHeight] = getImageSize(
+    rotatedWidth,
+    rotatedHeight,
+    containerWidth,
+    containerHeight
+  );
+
+  // 计算缩放比例
+  const scaleX = scaledWidth / rotatedWidth;
+  const scaleY = scaledHeight / rotatedHeight;
+
+  return Math.min(scaleX, scaleY);
+};
+
+function getOffset(shape: Konva.ShapeConfig, angle: number) {
+  // 角度对 90 取模
+  // angle = angle % 90;
+  console.log(angle, (angle / 90) % 4);
+
+  const rotationRound = (angle / 90) % 4;
+
+  // 根据角度计算位移值
+  let dx = 0;
+  let dy = 0;
+
+  if (rotationRound === 0) {
+    // 没有旋转，不需要位移
+  } else if (rotationRound === 3) {
+    // 旋转 270 度，位移量为 w
+    dy = shape.height!;
+  } else if (rotationRound === 2) {
+    // 旋转 180 度，位移量为 w,h
+    dx = shape.width!;
+    dy = shape.height!;
+  } else if (rotationRound === 1) {
+    // 旋转 90 度，位移量为 h
+    dx = shape.width!;
+  }
+
+  // 返回位移量
+  return [dx, dy];
+}
 
 type ClipStageProps = {
   onCutDone: (size: Box) => void;
@@ -24,7 +78,7 @@ const ClipStageContainer = styled.div`
 `;
 
 const InputActions = styled.div`
-  position: absolute;
+  position: fixed;
   bottom: 20px;
   left: 0;
   display: flex;
@@ -55,7 +109,7 @@ const InputActions = styled.div`
 
 const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const { image, texts, lines, group } = useHistory();
-  let { width, height } = useEditor();
+  let { width, height, handleSelectTool } = useEditor();
   const stage = useRef<Konva.Stage>(null);
   const layer = useRef<Konva.Layer>(null);
 
@@ -67,33 +121,35 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const reRef = useRef<Konva.Rect>(null);
   const trRef = useRef<Konva.Transformer>(null);
 
+  const startConfig = useRef<any>({});
+
   const handelResize = (oldBox: Box, newBox: Box) => {
-    const { x, y, width, height } = group.clip;
+    // const { x, y, width, height } = group.clip;
 
-    const { x: currentX, y: currentY, width: currentWidth, height: currentHeight } = newBox;
+    // const { x: currentX, y: currentY, width: currentWidth, height: currentHeight } = newBox;
 
-    if (currentX < x) {
-      newBox.x = x;
-    }
-    if (currentY < y) {
-      newBox.y = y;
-    }
+    // if (currentX < x) {
+    //   newBox.x = x;
+    // }
+    // if (currentY < y) {
+    //   newBox.y = y;
+    // }
 
-    if (currentWidth > width) {
-      newBox.width = width;
-    }
+    // if (currentWidth > width) {
+    //   newBox.width = width;
+    // }
 
-    if (currentHeight > height) {
-      newBox.height = height;
-    }
+    // if (currentHeight > height) {
+    //   newBox.height = height;
+    // }
 
-    if (currentWidth < 1) {
-      return oldBox;
-    }
+    // if (currentWidth < 1) {
+    //   return oldBox;
+    // }
 
-    if (currentWidth < 1) {
-      return oldBox;
-    }
+    // if (currentWidth < 1) {
+    //   return oldBox;
+    // }
 
     return newBox;
   };
@@ -124,47 +180,80 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   };
 
   const handleCutDown = () => {
+    console.log(
+      currentImage.current?.toDataURL({
+        width: trRef.current?.width()!,
+        height: trRef.current?.height()!,
+        x: trRef.current?.x()!,
+        y: trRef.current?.y()!,
+      })
+    );
+
+    console.log(
+      scaleGroup.current?.position(),
+      scaleGroup.current?.scaleX(),
+      scaleGroup.current?.rotation()
+    );
+
     onCutDone({
-      x: trRef.current?.x()!,
-      y: trRef.current?.y()!,
+      x: trRef.current?.x()! - group.x!,
+      y: trRef.current?.y()! - group.y!,
       width: trRef.current?.width()!,
       height: trRef.current?.height()!,
       rotation: trRef.current?.rotation()!,
     });
   };
 
-  const hanldeRotate = () => {
-    const attrs = {
-      x: currentImage.current?.x(),
-      y: currentImage.current?.y(),
-      width: currentImage.current?.width(),
-      height: currentImage.current?.height(),
-      rotation: currentImage.current?.rotation(),
-    };
-    console.log(reRef.current?.x(), reRef.current?.y());
-
-    const rotatedAttrs = rotateAroundPoint(attrs, 90, {
-      x: group.x! - reRef.current?.x()! + reRef.current?.width()! / 2,
-      y: group.y! - reRef.current?.y()! + reRef.current?.height()! / 2,
-    });
-
-    console.log(rotatedAttrs)
-
-    currentImage.current?.setAttrs({
-      ...rotatedAttrs,
-    });
-
-    // reRef.current?.setAttrs(rotatedAttrs)
+  const hanldeCutCancel = () => {
+    handleSelectTool(null);
   };
 
-  useEffect(() => {
+  const hanldeRotate = () => {
+    const rotate = scaleGroup.current?.rotation()!;
+
+    const scale = calculateScale(rotate + 90, width, height, group.clip.width, group.clip.height);
+    console.log(scale);
+
+    scaleGroup.current?.rotation(rotate + 90);
+    scaleGroup.current?.scaleX(group.scaleX! * scale);
+    scaleGroup.current?.scaleY(group.scaleY! * scale);
+
+    const scaleReact = scaleGroup.current?.getClientRect()!;
+    console.log(scaleReact);
+    const position = getPosition(scaleReact?.width, scaleReact?.height, width, height);
+    console.log('position', position);
+    const [dx, dy] = getOffset(scaleReact, rotate + 90);
+    console.log({
+      dx,
+      dy,
+    });
+
+    scaleGroup.current?.setAbsolutePosition({
+      x: position[0] + dx,
+      y: position[1] + dy,
+    });
+
+    reRef.current?.setAbsolutePosition({
+      x: position[0],
+      y: position[1],
+    });
+    reRef.current?.setSize({
+      width: scaleReact.width,
+      height: scaleReact.height,
+    });
+  };
+
+  useLayoutEffect(() => {
     reRef.current?.x(group.clip.x);
     reRef.current?.y(group.clip.y);
     reRef.current?.width(group.clip.width);
     reRef.current?.height(group.clip.height);
-
     trRef.current?.nodes([reRef.current!]);
     trRef.current?.getLayer()?.batchDraw();
+
+    // const scaleGroupRect = scaleGroup.current?.getClientRect()!;
+    // const calipRect = trRef.current?.getClientRect()!;
+    // console.log(scaleGroupRect,calipRect)
   }, []);
 
   return (
@@ -177,7 +266,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
               ref={clipGroup}
               // clip={group.clip}
             >
-              <Rect width={width} height={height} x={0} y={0} fill='red' />
+              {/* <Rect width={width} height={height} x={0} y={0} fill='red' /> */}
               <Group
                 id='scale'
                 ref={scaleGroup}
@@ -188,7 +277,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
                 x={group.x!}
                 y={group.y!}
               >
-                <Rect image={image.image} width={image.width} fill='blue' />
                 <Image
                   ref={currentImage}
                   image={image.image}
@@ -209,10 +297,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
         </Stage>
       </ClipStageContainer>
       <InputActions>
-        {/* <div onClick={handleCutCancel}>Cancel</div>
-        <IconRotate width={24} height={24} onClick={onRotate} />
-        <div onClick={handleCutDown}>Done</div> */}
-        <div>Cancel</div>
+        <div onClick={hanldeCutCancel}>Cancel</div>
         <IconRotate width={24} height={24} onClick={hanldeRotate} />
         <div onClick={handleCutDown}>Done</div>
       </InputActions>

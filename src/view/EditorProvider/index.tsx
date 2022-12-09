@@ -63,7 +63,7 @@ const EditorProvider: ComponentType<EditorProviderProps> = ({
     <EditorContext.Provider
       value={{
         width,
-        height,
+        height: height - 100,
         pencilConfig,
         textConfig,
         editorColors,

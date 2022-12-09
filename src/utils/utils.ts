@@ -58,8 +58,25 @@ export function rotateAroundPoint(
   };
 }
 
-export function rotateAroundCenter(shape: Konva.ShapeConfig, deltaDeg: number) {
-  const center = getCenter(shape);
-  console.log(shape,center)
-  return rotateAroundPoint(shape, deltaDeg, center);
+// export function rotateAroundCenter(shape: Konva.ShapeConfig, deltaDeg: number) {
+//   const center = getCenter(shape);
+//   console.log(shape,center)
+//   return rotateAroundPoint(shape, deltaDeg, center);
+// }
+
+
+export function getCenterOfPoint(shape: Konva.ShapeConfig, relativePoint: { x: number, y: number }) {
+  const angleRad = degToRad(shape.rotation || 0);
+
+  // 先计算相对坐标相对于矩形左上角的绝对坐标
+  const absolutePoint = {
+    x: shape.x! + relativePoint.x,
+    y: shape.y! + relativePoint.y,
+  };
+
+  // 然后根据这个绝对坐标计算旋转中心坐标
+  return {
+    x: absolutePoint.x + (shape.width! / 2) * Math.cos(angleRad) + (shape.height! / 2) * Math.sin(-angleRad),
+    y: absolutePoint.y + (shape.height! / 2) * Math.cos(angleRad) + (shape.width! / 2) * Math.sin(angleRad),
+  };
 }

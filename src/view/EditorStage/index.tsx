@@ -1,12 +1,12 @@
 import { Layer, Stage, Line, Image, Text, Group, Rect } from 'react-konva';
 
-import React, { ComponentType, useRef } from 'react';
+import React, { ComponentType, useEffect, useRef } from 'react';
 import Konva from 'konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import styled from '@emotion/styled';
 import Toolbar from 'view/Toolbar';
-import { getImageSize, getPosition, rotateAroundCenter } from 'utils/utils';
+import { getImageSize, getPosition,getCenterOfPoint } from 'utils/utils';
 import ClipStage from 'view/ClipStage';
 import { Box } from 'konva/lib/shapes/Transformer';
 
@@ -121,15 +121,17 @@ const EditorStage: ComponentType<EditorProps> = () => {
   };
 
   const handleCut = (clipSize: Box) => {
+    console.log(clipSize);
     handleSelectTool(null);
     const [imageWidth, imageHeight] = getImageSize(clipSize.width, clipSize.height, width, height);
     const scaleRatio = (imageWidth / clipSize.width + imageHeight / clipSize.height) / 2;
     const [selectionX, selectionY] = getPosition(imageWidth, imageHeight, width, height);
+    console.log(scaleGroup.current)
     setImage(
       {},
       {
-        x: (group.x! - clipSize.x) * scaleRatio! + selectionX,
-        y: (group.y! - clipSize.y) * scaleRatio! + selectionY,
+        x: -clipSize.x * scaleRatio! + selectionX,
+        y: -clipSize.y * scaleRatio! + selectionY,
         scaleX: (group.scaleX ?? 1) * scaleRatio,
         scaleY: (group.scaleY ?? 1) * scaleRatio,
         clip: {
@@ -155,18 +157,18 @@ const EditorStage: ComponentType<EditorProps> = () => {
   };
 
   const handleRota = () => {
-    const attrs = {
-      x: currentImage.current?.x(),
-      y: currentImage.current?.y(),
-      width: currentImage.current?.width(),
-      height: currentImage.current?.height(),
-      rotation: currentImage.current?.rotation(),
-    };
-    const rotatedAttrs = rotateAroundCenter(attrs, 90);
-    currentImage.current?.setAttrs(rotatedAttrs);
+    // const attrs = {
+    //   x: currentImage.current?.x(),
+    //   y: currentImage.current?.y(),
+    //   width: currentImage.current?.width(),
+    //   height: currentImage.current?.height(),
+    //   rotation: currentImage.current?.rotation(),
+    // };
+    // const rotatedAttrs = rotateAroundCenter(attrs, 90);
+    // currentImage.current?.setAttrs(rotatedAttrs);
 
-    console.log(scaleGroup.current?.width());
-    console.log(scaleGroup.current?.height());
+    // console.log(scaleGroup.current?.width());
+    // console.log(scaleGroup.current?.height());
   };
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -251,7 +253,6 @@ const EditorStage: ComponentType<EditorProps> = () => {
               x={group.x}
               y={group.y}
             >
-              <Rect image={image.image} width={image.width} fill='blue' />
               <Image
                 ref={currentImage}
                 image={image.image}
