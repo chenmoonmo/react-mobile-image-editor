@@ -6,7 +6,7 @@ import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import styled from '@emotion/styled';
 import Toolbar from 'view/Toolbar';
-import { getImageSize, getPosition } from 'utils/utils';
+import { getImageSize, getPosition, rotatePoint } from 'utils/utils';
 import ClipStage from 'view/ClipStage';
 import { Box } from 'konva/lib/shapes/Transformer';
 
@@ -54,9 +54,14 @@ const EditorStage: ComponentType<EditorProps> = () => {
   const currentLine = useRef<Konva.Line | null>(null);
 
   const basicScaleRatio = useMemo(() => {
-    const [clipContainWidth] = getImageSize(clipRect.width, clipRect.height, width, height);
+    const rotationStage = ((group.rotation / 90) % 4) + 1;
+    let containerSize = [width, height] as const;
+    if (rotationStage % 2 === 0) {
+      containerSize = [height, width];
+    }
+    const [clipContainWidth] = getImageSize(clipRect.width, clipRect.height, ...containerSize);
     return clipContainWidth / clipRect.width;
-  }, [clipRect]);
+  }, [clipRect, group.rotation]);
 
   const [dx, dy] = useMemo(() => {
     const centerX = width / 2;
@@ -66,11 +71,13 @@ const EditorStage: ComponentType<EditorProps> = () => {
 
     const clipCenterY = group.y + (clipRect.y + clipRect.height / 2) * basicScaleRatio;
 
-    const dx = isNaN(clipCenterX - centerX) ? 0 : clipCenterX - centerX;
-    const dy = isNaN(clipCenterY - centerY) ? 0 : clipCenterY - centerY;
+    const [rdx, rdy] = rotatePoint(clipCenterX, clipCenterY, group.rotation);
+
+    const dx = isNaN(clipCenterX - centerX) ? 0 : rdx - centerX;
+    const dy = isNaN(clipCenterY - centerY) ? 0 : rdy - centerY;
 
     return [dx, dy];
-  }, [group, clipRect, basicScaleRatio]);
+  }, [group, clipRect, group.rotation, basicScaleRatio]);
 
   const groupX = group.x - dx;
   const groupY = group.y - dy;
@@ -136,9 +143,9 @@ const EditorStage: ComponentType<EditorProps> = () => {
     ]);
   };
   // TODO: ts
-  const handleCut = (clipInfo: any) => {
+  const handleCut = (clipInfo: any, rotation: number) => {
     handleSelectTool(null);
-    setImage(clipInfo);
+    setImage(clipInfo, rotation);
   };
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -224,6 +231,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
                 x: basicScaleRatio,
                 y: basicScaleRatio,
               }}
+              rotation={group.rotation}
             >
               <Image ref={currentImage} image={image} width={group.width} height={group.height} />
               {texts.map((text, index) => (

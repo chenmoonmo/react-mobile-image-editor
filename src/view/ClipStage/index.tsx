@@ -10,7 +10,7 @@ import { getImageSize, rotatePoint } from 'utils/utils';
 import { useAnchor } from 'utils/hooks/useAnchor';
 
 type ClipStageProps = {
-  onCutDone: (size: any) => void;
+  onCutDone: (size: any, rotation: number) => unknown;
 };
 
 const ClipContainer = styled.div`
@@ -68,7 +68,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const basicScaleRatio = useMemo(() => {
     const rotationStage = ((rotation / 90) % 4) + 1;
     let containerSize = [width, height] as const;
-    console.log(rotationStage);
     if (rotationStage % 2 === 0) {
       containerSize = [height, width];
     }
@@ -116,7 +115,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   };
 
   const handleCutDown = () => {
-    onCutDone(clipInfo);
+    onCutDone(clipInfo, rotation);
   };
 
   const hanldeCutCancel = () => {

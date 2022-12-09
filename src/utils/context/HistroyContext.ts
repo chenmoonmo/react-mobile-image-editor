@@ -25,7 +25,7 @@ export type HistoryContextType = {
   setTexts: (
     callback: (texts: HistoryContextType['texts']) => HistoryContextType['texts']
   ) => unknown;
-  setImage: (clipRectInfo: Partial<HistoryContextType['clipRect']>) => unknown;
+  setImage: (clipRectInfo: Partial<HistoryContextType['clipRect']>, rotation: number) => unknown;
   setGroup: (groupConfig: HistoryContextType['group']) => unknown;
   redo: () => unknown;
   undo: () => unknown;
