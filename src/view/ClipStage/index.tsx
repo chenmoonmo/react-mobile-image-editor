@@ -1,13 +1,12 @@
 import styled from '@emotion/styled';
 import Konva from 'konva';
 import { Box } from 'konva/lib/shapes/Transformer';
-import { ComponentType, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ComponentType, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Group, Rect, Stage, Layer, Image, Text, Line, Transformer } from 'react-konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import { ReactComponent as IconRotate } from 'assets/icons/icon-rotate.svg';
 import { getImageSize, rotatePoint } from 'utils/utils';
-import { usePrevious } from 'utils/hooks/usePrevious';
 import { useAnchor } from 'utils/hooks/useAnchor';
 
 type ClipStageProps = {
@@ -57,9 +56,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   const drawAnchors = useAnchor();
 
-  const stage = useRef<Konva.Stage>(null);
-  const layer = useRef<Konva.Layer>(null);
-
   const scaleGroup = useRef<Konva.Group>(null);
   const currentImage = useRef<Konva.Image | null>(null);
 
@@ -68,26 +64,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   const [clipInfo, setClipInfo] = useState(clipRect);
   const [rotation, setRotaion] = useState(group.rotation);
-
-  const anchorShapeCanvas = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 24;
-    canvas.height = 24;
-    const ctx = canvas.getContext('2d')!;
-    ctx.strokeStyle = '#0096FF';
-    ctx.fillStyle = '#0096FF';
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.lineTo(10, 10);
-    ctx.lineTo(24, 10);
-    ctx.lineTo(24, 12);
-    ctx.lineTo(12, 12);
-    ctx.lineTo(12, 24);
-    ctx.lineTo(10, 24);
-    ctx.closePath();
-    ctx.fill();
-    return canvas;
-  }, []);
 
   const basicScaleRatio = useMemo(() => {
     const rotationStage = ((rotation / 90) % 4) + 1;
@@ -100,7 +76,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
     return clipContainWidth / clipInfo.width;
   }, [clipInfo, rotation]);
 
-  // TODO: 根据 rotation 来计算
   const [dx, dy] = useMemo(() => {
     const centerX = width / 2;
     const centerY = height / 2;
@@ -120,6 +95,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const groupX = group.x - dx;
   const groupY = group.y - dy;
 
+  // TODO: 限制 裁剪区域在图片内
   const handelResize = (oldBox: Box, newBox: Box) => {
     return newBox;
   };
@@ -153,13 +129,15 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   useLayoutEffect(() => {
     trRef.current?.nodes([reRef.current!]);
+    // TODO: 修改绘制函数
     drawAnchors(trRef.current!);
   }, []);
 
   return (
     <ClipContainer>
-      <Stage ref={stage} width={width} height={height}>
-        <Layer ref={layer}>
+      <Stage width={width} height={height}>
+        <Layer>
+          {/* TODO: 允许平移图片 和 双指缩放 */}
           <Group
             ref={scaleGroup}
             x={groupX}

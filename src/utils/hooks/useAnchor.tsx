@@ -22,7 +22,6 @@ export const useAnchor = () => {
   const drawAnchors = (transformer: Konva.Transformer) => {
     for (let positon of AnchorPositons) {
       const rect = transformer.findOne(`.${positon}`) as Konva.Rect;
-      console.log(positon, rect);
       rect?.fillPriority('pattern');
       rect?.fillPatternRepeat('no-repeat');
       rect?.fillPatternImage(anchorsRef.current[positon]);
@@ -45,7 +44,7 @@ const anchorShapeCanvasFactory = (position: AnchorPositon, color: string = '#009
   canvas.width = 24;
   canvas.height = 24;
   const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#0096FF';
+  ctx.fillStyle = color;
   ctx.lineCap = 'round';
   ctx.beginPath();
   switch (position) {
