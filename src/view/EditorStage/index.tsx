@@ -86,6 +86,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
     const pos = drawTarget.getRelativePointerPosition()!;
     currentLine.current = new Konva.Line({
       ...pencilConfig,
+      strokeWidth: pencilConfig.strokeWidth! / basicScaleRatio,
       points: pos ? [pos.x, pos.y, pos.x, pos.y] : [],
     });
     drawTarget.add(currentLine.current);
@@ -107,6 +108,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
         ...preLines,
         {
           ...pencilConfig,
+          strokeWidth: pencilConfig.strokeWidth! / basicScaleRatio,
           points: currentLine.current?.points(),
         },
       ];
@@ -117,17 +119,20 @@ const EditorStage: ComponentType<EditorProps> = () => {
     }, 50);
   };
 
-  const handleTextAdd = (words: string) => {
-    const textWidth = words.length * 15 > textConfig!.width ? textConfig.width : words.length * 15;
+  const handleTextAdd = (text: string) => {
+    const fontSize = textConfig.fontSize! / basicScaleRatio;
+    const maxWidth = textConfig!.width / basicScaleRatio;
+    const textWidth = text.length * fontSize > maxWidth ? maxWidth : text.length * fontSize;
     setTexts((preTexts) => [
       ...preTexts,
       {
         ...textConfig,
-        text: words,
-        scaleX: 1 / basicScaleRatio,
-        scaleY: 1 / basicScaleRatio,
-        x: (clipRect.width - textWidth) / 2 / basicScaleRatio,
-        y: clipRect.height / basicScaleRatio / 2,
+        fontSize,
+        text,
+        align: 'center',
+        width: textWidth,
+        x: clipRect.x + clipRect.width / 2 - textWidth / 2,
+        y: clipRect.y + clipRect.height / 2,
       },
     ]);
   };
