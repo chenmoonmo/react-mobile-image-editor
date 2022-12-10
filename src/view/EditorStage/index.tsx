@@ -82,15 +82,13 @@ const EditorStage: ComponentType<EditorProps> = () => {
   const groupY = group.y - dy;
 
   const handleDrawStart = () => {
-    const pos = stage.current?.getPointerPosition()!;
-    const currentBG = stage.current?.getIntersection(pos);
-    if (currentBG && currentBG !== currentLine.current) {
-      currentLine.current = new Konva.Line({
-        ...pencilConfig,
-        points: pos ? [pos.x, pos.y, pos.x, pos.y] : [],
-      });
-      layer.current?.add(currentLine.current);
-    }
+    const drawTarget = scaleGroup.current!;
+    const pos = drawTarget.getRelativePointerPosition()!;
+    currentLine.current = new Konva.Line({
+      ...pencilConfig,
+      points: pos ? [pos.x, pos.y, pos.x, pos.y] : [],
+    });
+    drawTarget.add(currentLine.current);
   };
 
   const handleDraw = () => {
@@ -98,26 +96,18 @@ const EditorStage: ComponentType<EditorProps> = () => {
     if (lastLine === null) {
       return;
     }
-    const pos = stage.current?.getPointerPosition()!;
-    const currentBG = stage.current?.getIntersection(pos);
-    if (currentBG && currentBG !== currentLine.current) {
-      const newPoints = lastLine.points().concat([pos.x, pos.y]);
-      lastLine.points(newPoints);
-    }
+    const pos = scaleGroup.current?.getRelativePointerPosition()!;
+    const newPoints = lastLine.points().concat([pos.x, pos.y]);
+    lastLine.points(newPoints);
   };
 
   const handleDrawEnd = () => {
-    const lastLine = currentLine.current;
     setLines((preLines) => {
       return [
         ...preLines,
         {
           ...pencilConfig,
-          scaleX: 1 / basicScaleRatio,
-          scaleY: 1 / basicScaleRatio,
-          x: -groupX / basicScaleRatio,
-          y: -groupY / basicScaleRatio,
-          points: lastLine?.points(),
+          points: currentLine.current?.points(),
         },
       ];
     });
@@ -216,7 +206,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
         onMouseUp={handleMouseUp}
         onTouchEnd={handleTouchEnd}
       >
-        <Layer ref={layer} >
+        <Layer ref={layer}>
           {/* <Rect width={width} height={height} x={0} y={0} fill='red' /> */}
           {/* scale group */}
           <Group
