@@ -103,23 +103,43 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const groupX = group.x - dx;
   const groupY = group.y - dy;
 
-  // TODO: 限制 裁剪区域在图片内
-  const handelResize = (oldBox: Box, newBox: Box) => {
-    return newBox;
-  };
-
   const handleTransformEnd = () => {
     const node = reRef.current!;
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
     const currentRectBox = {
-      width: reRef.current?.width()! * scaleX,
-      height: reRef.current?.height()! * scaleY,
-      x: reRef.current?.position().x!,
-      y: reRef.current?.position().y!,
+      width: node.width()! * scaleX,
+      height: node.height()! * scaleY,
+      x: +node.position().x?.toFixed(5)!,
+      y: +node.position().y?.toFixed(5)!,
     };
     node.scaleX(1);
     node.scaleY(1);
+
+    if (currentRectBox.x < 0) {
+      currentRectBox.width += currentRectBox.x;
+      currentRectBox.x = 0;
+      node.x(0);
+    }
+
+    if (currentRectBox.y < 0) {
+      currentRectBox.height += currentRectBox.y;
+      currentRectBox.y = 0;
+      node.y(0);
+    }
+
+    if (currentRectBox.x + currentRectBox.width > group.width) {
+      currentRectBox.width = group.width - currentRectBox.x;
+    }
+
+    if (currentRectBox.y + currentRectBox.height > group.height) {
+      currentRectBox.height = group.height - currentRectBox.y;
+    }
+
+    currentRectBox.height =
+      currentRectBox.height < 0 ? -currentRectBox.height : currentRectBox.height;
+    currentRectBox.width = currentRectBox.width < 0 ? -currentRectBox.width : currentRectBox.width;
+
     setClipInfo(currentRectBox);
   };
 
@@ -200,6 +220,16 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
     const touchTarget = scaleGroup.current!;
     const scaleX = touchTarget.scaleX()!;
     const scaleY = touchTarget.scaleY()!;
+    // if (scaleX * basicScaleRatio < 1 || scaleY * basicScaleRatio < 1) {
+    //   return touchTarget.to({
+    //     scaleX: 1,
+    //     scaleY: 1,
+    //     x: 0,
+    //     y: 0,
+    //     duration: 0.1,
+    //   });
+    // }
+
     const currentRectBox = {
       width: node.width()! / scaleX,
       height: node.height()! / scaleY,
@@ -213,6 +243,30 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
       x: 0,
       y: 0,
     });
+
+    if (currentRectBox.x < 0) {
+      currentRectBox.width += currentRectBox.x;
+      currentRectBox.x = 0;
+      node.x(0);
+    }
+
+    if (currentRectBox.y < 0) {
+      currentRectBox.height += currentRectBox.y;
+      currentRectBox.y = 0;
+      node.y(0);
+    }
+
+    if (currentRectBox.x + currentRectBox.width > group.width) {
+      currentRectBox.width = group.width - currentRectBox.x;
+    }
+
+    if (currentRectBox.y + currentRectBox.height > group.height) {
+      currentRectBox.height = group.height - currentRectBox.y;
+    }
+
+    currentRectBox.height =
+      currentRectBox.height < 0 ? -currentRectBox.height : currentRectBox.height;
+    currentRectBox.width = currentRectBox.width < 0 ? -currentRectBox.width : currentRectBox.width;
 
     setClipInfo(currentRectBox);
   };
@@ -271,12 +325,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
               onTransformEnd={handleTransformEnd}
             />
           </Group>
-          <Transformer
-            ref={trRef}
-            rotateEnabled={false}
-            anchorSize={24}
-            boundBoxFunc={handelResize}
-          />
+          <Transformer ref={trRef} rotateEnabled={false} anchorSize={24} />
         </Layer>
       </Stage>
       <InputActions>
