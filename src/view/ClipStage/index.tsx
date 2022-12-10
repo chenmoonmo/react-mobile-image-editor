@@ -171,16 +171,18 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
         x: touch1.clientX,
         y: touch1.clientY,
       };
+
       const p2 = {
         x: touch2.clientX,
         y: touch2.clientY,
       };
 
+      const newCenter = getCenter(p1, p2);
+
       if (!lastCenter.current) {
-        lastCenter.current = getCenter(p1, p2);
+        lastCenter.current = newCenter;
         return;
       }
-      const newCenter = getCenter(p1, p2);
 
       const dist = getDistance(p1, p2);
 
@@ -210,6 +212,29 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
       lastDist.current = dist;
       lastCenter.current = newCenter;
+      return;
+    }
+
+    if (touch1) {
+      if (trRef.current?.isTransforming()) return;
+
+      const p1 = {
+        x: touch1.clientX,
+        y: touch1.clientY,
+      };
+
+      if (!lastCenter.current) {
+        return (lastCenter.current = p1);
+      }
+
+      const dx = p1.x - lastCenter.current.x;
+      const dy = p1.y - lastCenter.current.y;
+
+      touchTarget.move({
+        x: dx,
+        y: dy,
+      });
+      lastCenter.current = p1;
     }
   };
 
@@ -255,7 +280,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
       currentRectBox.y = 0;
       node.y(0);
     }
-
+    // TODO: 限制裁剪合理化
     if (currentRectBox.x + currentRectBox.width > group.width) {
       currentRectBox.width = group.width - currentRectBox.x;
     }
