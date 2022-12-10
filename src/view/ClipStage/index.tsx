@@ -1,15 +1,12 @@
 import styled from '@emotion/styled';
 import Konva from 'konva';
-import { Box } from 'konva/lib/shapes/Transformer';
 import { ComponentType, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Group, Rect, Stage, Layer, Image, Text, Line, Transformer } from 'react-konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
-import { ReactComponent as IconRotate } from 'assets/icons/icon-rotate.svg';
+import IconRotate from 'assets/icons/icon-rotate.svg';
 import { getCenter, getDistance, getImageSize, Point, rotatePoint } from 'utils/utils';
 import { useAnchor } from 'utils/hooks/useAnchor';
-import image2 from '../../image.png';
-import useImage from 'use-image';
 
 type ClipStageProps = {
   onCutDone: (size: any, rotation: number) => unknown;
@@ -55,9 +52,6 @@ const InputActions = styled.div`
 const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const { image, texts, lines, group, clipRect } = useHistory();
   let { width, height, handleSelectTool } = useEditor();
-
-  const [fillimage] = useImage(image2);
-
   const drawAnchors = useAnchor();
 
   const scaleGroup = useRef<Konva.Group>(null);
@@ -343,8 +337,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
               y={clipInfo.y}
               width={clipInfo.width}
               height={clipInfo.height}
-              // fillPatternImage={fillimage}
-              // fillPriority='pattern'
               fill='green'
               opacity={0.3}
               onTransformEnd={handleTransformEnd}
