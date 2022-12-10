@@ -10,7 +10,6 @@ import { getCenter, getDistance, getImageSize, Point, rotatePoint } from 'utils/
 import { useAnchor } from 'utils/hooks/useAnchor';
 import image2 from '../../image.png';
 import useImage from 'use-image';
-import { userInfo } from 'os';
 
 type ClipStageProps = {
   onCutDone: (size: any, rotation: number) => unknown;
@@ -139,21 +138,20 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   // TODO: 缩放和图片裁剪位置关系
   const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
+    const touchTarget = scaleGroup.current!;
     const touch1 = e.evt.touches[0];
     const touch2 = e.evt.touches[1];
 
     if (touch1 && touch2) {
-      // if the stage was under Konva's drag&drop
-      // we need to stop it, and implement our own pan logic with two pointers
       if (stageRef.current?.isDragging()) {
         stageRef.current?.stopDrag();
       }
 
-      var p1 = {
+      const p1 = {
         x: touch1.clientX,
         y: touch1.clientY,
       };
-      var p2 = {
+      const p2 = {
         x: touch2.clientX,
         y: touch2.clientY,
       };
@@ -162,36 +160,33 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
         lastCenter.current = getCenter(p1, p2);
         return;
       }
-      var newCenter = getCenter(p1, p2);
+      const newCenter = getCenter(p1, p2);
 
-      var dist = getDistance(p1, p2);
+      const dist = getDistance(p1, p2);
 
       if (!lastDist.current) {
         lastDist.current = dist;
       }
 
-      // local coordinates of center point
-
-      var pointTo = {
-        x: (newCenter.x - currentImage.current?.x()!) / currentImage.current?.scaleX()!,
-        y: (newCenter.y - currentImage.current?.y()!) / currentImage.current?.scaleX()!,
+      const pointTo = {
+        x: (newCenter.x - touchTarget.x()!) / touchTarget.scaleX()!,
+        y: (newCenter.y - touchTarget.y()!) / touchTarget.scaleX()!,
       };
 
-      var scale = currentImage.current?.scaleX()! * (dist / lastDist.current);
+      const scale = touchTarget.scaleX()! * (dist / lastDist.current);
 
-      currentImage.current?.scaleX(scale);
-      currentImage.current?.scaleY(scale);
+      touchTarget.scaleX(scale);
+      touchTarget.scaleY(scale);
 
-      // calculate new position of the stage
-      var dx = newCenter.x - lastCenter.current.x;
-      var dy = newCenter.y - lastCenter.current.y;
+      const dx = newCenter.x - lastCenter.current.x;
+      const dy = newCenter.y - lastCenter.current.y;
 
-      var newPos = {
+      const newPos = {
         x: newCenter.x - pointTo.x * scale + dx,
         y: newCenter.y - pointTo.y * scale + dy,
       };
 
-      currentImage.current?.position(newPos);
+      touchTarget.position(newPos);
 
       lastDist.current = dist;
       lastCenter.current = newCenter;
@@ -201,11 +196,29 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const handleTouchEnd = () => {
     lastDist.current = 0;
     lastCenter.current = null;
+    const node = reRef.current!;
+    const touchTarget = scaleGroup.current!;
+    const scaleX = touchTarget.scaleX()!;
+    const scaleY = touchTarget.scaleY()!;
+    const currentRectBox = {
+      width: node.width()! / scaleX,
+      height: node.height()! / scaleY,
+      x: (node.position().x! - touchTarget.x()!) / scaleX,
+      y: (node.position().y! - touchTarget.y()!) / scaleY,
+    };
+
+    touchTarget.scaleX(1);
+    touchTarget.scaleY(1);
+    touchTarget.position({
+      x: 0,
+      y: 0,
+    });
+
+    setClipInfo(currentRectBox);
   };
 
   useLayoutEffect(() => {
     trRef.current?.nodes([reRef.current!]);
-    // TODO: 修改绘制函数
     drawAnchors(trRef.current!);
   }, []);
 
@@ -227,7 +240,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
         <Layer>
           {/* TODO: 允许平移图片 和 双指缩放 */}
           <Group
-            ref={scaleGroup}
             x={groupX}
             y={groupY}
             width={group.width}
@@ -236,7 +248,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
             scaleY={basicScaleRatio}
             rotation={rotation}
           >
-            <Group draggable={true}>
+            <Group ref={scaleGroup}>
               <Image ref={currentImage} image={image} width={group.width} height={group.height} />
               {texts.map((text, index) => (
                 <Text key={index} draggable {...text} />
@@ -246,7 +258,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
               ))}
             </Group>
             {/* TODO： 三等分线 */}
-
             <Rect
               ref={reRef}
               x={clipInfo.x}

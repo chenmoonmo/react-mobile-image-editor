@@ -57,21 +57,31 @@ const anchorShapeCanvasFactory = (position: AnchorPositon, color: string = '#009
       ctx.lineTo(10, 24);
       break;
     case 'top-center':
+      ctx.lineTo(0, 14);
+      ctx.lineTo(24, 14);
+      ctx.lineTo(24, 12);
+      ctx.lineTo(0, 12);
+      break;
+    case 'top-right':
+      ctx.lineTo(0, 10);
+      ctx.lineTo(14, 10);
+      ctx.lineTo(14, 24);
+      ctx.lineTo(12, 24);
+      ctx.lineTo(12, 12);
+      ctx.lineTo(0, 12);
+      break;
     case 'bottom-center':
       ctx.lineTo(0, 10);
       ctx.lineTo(24, 10);
       ctx.lineTo(24, 12);
       ctx.lineTo(0, 12);
       break;
-    case 'top-right':
-      ctx.lineTo(14, 10);
-      ctx.lineTo(14, 24);
-      ctx.lineTo(12, 24);
-      ctx.lineTo(12, 12);
-      ctx.lineTo(0, 12);
-      ctx.lineTo(10, 12);
-      break;
     case 'middle-left':
+      ctx.lineTo(12, 0);
+      ctx.lineTo(12, 24);
+      ctx.lineTo(14, 24);
+      ctx.lineTo(14, 0);
+      break;
     case 'middle-right':
       ctx.lineTo(12, 0);
       ctx.lineTo(12, 24);
@@ -79,12 +89,12 @@ const anchorShapeCanvasFactory = (position: AnchorPositon, color: string = '#009
       ctx.lineTo(10, 0);
       break;
     case 'bottom-left':
+      ctx.lineTo(12, 0);
       ctx.lineTo(12, 12);
       ctx.lineTo(24, 12);
       ctx.lineTo(24, 14);
-      ctx.lineTo(12, 14);
-      ctx.lineTo(12, 0);
-      ctx.lineTo(14, 0);
+      ctx.lineTo(10, 14);
+      ctx.lineTo(10, 0);
       break;
     case 'bottom-right':
       ctx.lineTo(12, 12);
