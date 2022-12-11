@@ -1,4 +1,4 @@
-import { Layer, Stage, Line, Image, Text, Group, Rect } from 'react-konva';
+import { Layer, Stage, Line, Image, Text, Group } from 'react-konva';
 
 import React, { ComponentType, useMemo, useRef } from 'react';
 import Konva from 'konva';
@@ -6,10 +6,8 @@ import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import styled from '@emotion/styled';
 import Toolbar from 'view/Toolbar';
-import { getImageSize, getPosition, rotatePoint } from 'utils/utils';
+import { getImageSize, rotatePoint } from 'utils/utils';
 import ClipStage from 'view/ClipStage';
-import { Box } from 'konva/lib/shapes/Transformer';
-import { flushSync } from 'react-dom';
 
 type EditorProps = {
   image: string;
@@ -136,6 +134,27 @@ const EditorStage: ComponentType<EditorProps> = () => {
       },
     ]);
   };
+
+  const handleTextDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
+    const currentText = e.target;
+    const position = currentText.position()!;
+    const textHeight = currentText.height();
+    if (position.y + textHeight > group.height) {
+      console.log(position);
+    }
+  };
+
+  const handleTextDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+    const currentText = e.target;
+    const index = currentText.attrs.id.slice(-1);
+    const position = currentText.position()!;
+    setTexts((preTexts) => {
+      preTexts[index].x = position.x;
+      preTexts[index].y = position.y;
+      return preTexts;
+    });
+  };
+
   // TODO: ts
   const handleCut = (clipInfo: any, rotation: number) => {
     setImage(clipInfo, rotation);
@@ -212,7 +231,6 @@ const EditorStage: ComponentType<EditorProps> = () => {
         onTouchEnd={handleTouchEnd}
       >
         <Layer ref={layer}>
-          {/* <Rect width={width} height={height} x={0} y={0} fill='red' /> */}
           {/* scale group */}
           <Group
             id='scale'
@@ -233,7 +251,16 @@ const EditorStage: ComponentType<EditorProps> = () => {
           >
             <Image ref={currentImage} image={image} width={group.width} height={group.height} />
             {texts.map((text, index) => (
-              <Text key={index} draggable {...text} />
+              <Text
+                key={index}
+                id={`text-${index}`}
+                {...text}
+                x={text.x}
+                y={text.y}
+                draggable={true}
+                onDragMove={handleTextDragMove}
+                onDragEnd={handleTextDragEnd}
+              />
             ))}
             {lines.map((line, index) => (
               <Line key={index} {...line} />

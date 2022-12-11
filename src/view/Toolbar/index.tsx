@@ -118,8 +118,7 @@ const Toolbar: ComponentType<ToolBarProps> = ({ onAddText }) => {
         startInput('', onAddText);
         break;
       case 'Cut':
-        // onCutStart?.();
-        handleSelectTool(tool);
+        // handleSelectTool(tool);
         break;
       default:
         handleSelectTool(tool);
