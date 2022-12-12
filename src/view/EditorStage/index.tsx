@@ -15,6 +15,8 @@ import { css } from '@emotion/react';
 
 type EditorProps = {};
 
+type DeleteAreaStatus = 'none' | 'show' | 'active';
+
 const StageContainer = styled.div`
   position: relative;
   width: 100%;
@@ -43,7 +45,7 @@ const StageContainer = styled.div`
 
 const DeleteArea = styled.div<{ isActive: boolean }>`
   ${(props) => css`
-      --fill-color: ${props.isActive? '#ff6650' : '#0096ff'} ;
+    --fill-color: ${props.isActive ? '#ff6650' : '#0096ff'};
   `}
   position: absolute;
   bottom: 20px;
@@ -67,7 +69,7 @@ const DeleteArea = styled.div<{ isActive: boolean }>`
   svg {
     width: 24px;
     height: 24px;
-    fill: var(--fill-color);;
+    fill: var(--fill-color);
   }
 `;
 
@@ -77,6 +79,8 @@ const EditorStage: ComponentType<EditorProps> = () => {
     useHistory();
 
   const [currentBlurPos, setBlurPos] = useState<{ x: number; y: number }[]>([]);
+
+  const [deleteAreaStatus, setDeleteAreaStatus] = useState<DeleteAreaStatus>('none');
 
   const stage = useRef<Konva.Stage>(null);
   const layer = useRef<Konva.Layer>(null);
@@ -194,7 +198,10 @@ const EditorStage: ComponentType<EditorProps> = () => {
     const position = currentText.position()!;
     const textHeight = currentText.height();
     if (position.y + textHeight > group.height) {
-      console.log(position);
+      setDeleteAreaStatus('show');
+    }
+    if (position.y >= group.height + 100) {
+      setDeleteAreaStatus('active');
     }
   };
 
@@ -327,11 +334,14 @@ const EditorStage: ComponentType<EditorProps> = () => {
       {activeTool === 'Words' && (
         <WordInput onDone={handleTextAdd} onCancel={() => handleSelectTool(null)} />
       )}
-      <DeleteArea isActive>
-        <IconDelete></IconDelete>
-        <div>Drag here to delete</div>
-      </DeleteArea>
-      <Toolbar />
+      {deleteAreaStatus !== 'none' ? (
+        <DeleteArea isActive={deleteAreaStatus === 'active'}>
+          <IconDelete></IconDelete>
+          <div>Drag here to delete</div>
+        </DeleteArea>
+      ) : (
+        <Toolbar />
+      )}
     </StageContainer>
   );
 };
