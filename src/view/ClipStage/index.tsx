@@ -14,8 +14,6 @@ import {
   rotatePoint,
 } from 'utils/utils';
 import { useAnchor } from 'utils/hooks/useAnchor';
-import image2 from '../../image.png';
-import useImage from 'use-image';
 import Blurs from 'view/Blurs';
 
 type ClipStageProps = {
@@ -26,7 +24,7 @@ const ClipContainer = styled.div`
   position: absolute;
   top: 0;
   left: 0;
-  background: #ccc;
+  background: #000;
 `;
 
 const InputActions = styled.div`
@@ -80,9 +78,9 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const [rotation, setRotaion] = useState(group.rotation);
   const basicScaleRatio = useMemo(() => {
     const rotationStage = ((rotation / 90) % 4) + 1;
-    let containerSize = [width, height] as const;
+    let containerSize = [width, height * 0.8] as const;
     if (rotationStage % 2 === 0) {
-      containerSize = [height, width];
+      containerSize = [height * 0.8, width];
     }
     const [clipContainWidth] = getImageSize(clipInfo.width, clipInfo.height, ...containerSize);
     return clipContainWidth / clipInfo.width;
@@ -90,7 +88,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   const [dx, dy] = useMemo(() => {
     const centerX = width / 2;
-    const centerY = height / 2;
+    const centerY = (height * 0.8) / 2;
 
     const clipCenterX = group.x + (clipInfo.x + clipInfo.width / 2) * basicScaleRatio;
 

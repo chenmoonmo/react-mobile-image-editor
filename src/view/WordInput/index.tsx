@@ -1,13 +1,15 @@
 import { css } from '@emotion/react';
 import styled from '@emotion/styled';
-import React, { ComponentType, ReactNode, useRef, useState } from 'react';
+import React, { ComponentType, ReactNode, useEffect, useRef, useState } from 'react';
 import ReactDOM, { flushSync } from 'react-dom';
 import WordInputContext from 'utils/context/WordInputContext';
 import useEditor from 'utils/hooks/useEditor';
 import useVisualViewport from 'utils/hooks/useVisualViewport';
 
 type WordInputProviderProps = {
-  children?: ReactNode;
+  defaultWord?: string;
+  onDone?: (word: string) => unknown;
+  onCancel?: () => unknown;
 };
 
 const ColorItemStyle = (props: { color: string; currentColor?: string }) => css`
@@ -110,35 +112,27 @@ const InputActions = styled.div`
   }
 `;
 
-const WordInputProvider: ComponentType<WordInputProviderProps> = ({ children }) => {
+const WordInput: ComponentType<WordInputProviderProps> = ({
+  defaultWord = '',
+  onDone,
+  onCancel,
+}) => {
   const textareaEl = useRef<HTMLTextAreaElement>(null);
-  const successCallback = useRef<(word: string) => void>();
+
   const viewprot = useVisualViewport(() => {
     textareaEl.current?.focus();
   });
 
   const { editorColors, textConfig, changeColor } = useEditor();
 
-  const [isInputShow, setIsInputShow] = useState(false);
-
-  const handleShow = (defaultWord: string = '', onSuccess?: (word: string) => void) => {
-    flushSync(() => {
-      setIsInputShow(true);
-    });
-    textareaEl.current?.focus();
-    textareaEl.current!.value = defaultWord;
-    successCallback.current = onSuccess;
-  };
-
   const handleCancel = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsInputShow(false);
+    onCancel?.();
   };
 
   const hanldeDone = (e: React.MouseEvent) => {
     e.stopPropagation();
-    successCallback.current?.(textareaEl.current!.value);
-    setIsInputShow(false);
+    onDone?.(textareaEl.current!.value);
   };
 
   const handleChangeColor = (e: React.MouseEvent, color: string) => {
@@ -148,42 +142,36 @@ const WordInputProvider: ComponentType<WordInputProviderProps> = ({ children }) 
     textareaEl.current?.focus();
   };
 
-  return (
-    <WordInputContext.Provider
-      value={{
-        isShow: isInputShow,
-        startInput: handleShow,
-      }}
-    >
-      {children}
-      {isInputShow &&
-        ReactDOM.createPortal(
-          <WordInputModal onClick={(e) => e.stopPropagation()}>
-            <InputActions>
-              <div onClick={handleCancel}>Cancel</div>
-              <div onClick={hanldeDone}>Done</div>
-            </InputActions>
-            <InputArea
-              ref={textareaEl}
-              autoComplete='off'
-              wrap='hard'
-              style={{ color: textConfig.fill }}
-            />
-            <ColorSelector viewprotHeight={viewprot.height}>
-              {editorColors?.map((color) => (
-                <ColorItem
-                  key={color}
-                  color={color}
-                  currentColor={textConfig.fill}
-                  onClick={(e) => handleChangeColor(e, color)}
-                />
-              ))}
-            </ColorSelector>
-          </WordInputModal>,
-          document.body
-        )}
-    </WordInputContext.Provider>
+  useEffect(() => {
+    textareaEl.current?.focus();
+    textareaEl.current!.value = defaultWord;
+  }, []);
+
+  return ReactDOM.createPortal(
+    <WordInputModal onClick={(e) => e.stopPropagation()}>
+      <InputActions>
+        <div onClick={handleCancel}>Cancel</div>
+        <div onClick={hanldeDone}>Done</div>
+      </InputActions>
+      <InputArea
+        ref={textareaEl}
+        autoComplete='off'
+        wrap='hard'
+        style={{ color: textConfig.fill }}
+      />
+      <ColorSelector viewprotHeight={viewprot.height}>
+        {editorColors?.map((color) => (
+          <ColorItem
+            key={color}
+            color={color}
+            currentColor={textConfig.fill}
+            onClick={(e) => handleChangeColor(e, color)}
+          />
+        ))}
+      </ColorSelector>
+    </WordInputModal>,
+    document.body
   );
 };
 
-export default WordInputProvider;
+export default WordInput;

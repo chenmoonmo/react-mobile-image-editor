@@ -60,15 +60,12 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
     });
   };
 
-  
   const handleBlurChange: UpdateFunction<HistoryContextType['blurs']> = (callback) => {
     history.current?.pushSync({
       ...stateRef.current,
       blurs: callback(stateRef.current.blurs),
     });
   };
-
-  
 
   const handleTextChange: UpdateFunction<HistoryContextType['texts']> = (callback) => {
     history.current?.pushSync({

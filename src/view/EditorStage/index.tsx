@@ -1,4 +1,4 @@
-import { Layer, Stage, Line, Image, Text, Group } from 'react-konva';
+import { Layer, Stage, Line, Image, Text, Group, Transformer, Rect } from 'react-konva';
 
 import React, { ComponentType, useEffect, useMemo, useRef, useState } from 'react';
 import Konva from 'konva';
@@ -9,9 +9,9 @@ import Toolbar from 'view/Toolbar';
 import { getImageSize, rotatePoint } from 'utils/utils';
 import ClipStage from 'view/ClipStage';
 import Blurs from 'view/Blurs';
+import WordInput from 'view/WordInput';
 
 type EditorProps = {
-  image: string;
 };
 
 const StageContainer = styled.div`
@@ -54,11 +54,13 @@ const EditorStage: ComponentType<EditorProps> = () => {
   const currentImage = useRef<Konva.Image | null>(null);
   const currentLine = useRef<Konva.Line | null>(null);
 
+  const trRef = useRef<Konva.Transformer>(null);
+
   const basicScaleRatio = useMemo(() => {
     const rotationStage = ((group.rotation / 90) % 4) + 1;
-    let containerSize = [width, height] as const;
+    let containerSize = [width, height * 0.8] as const;
     if (rotationStage % 2 === 0) {
-      containerSize = [height, width];
+      containerSize = [height * 0.8, width];
     }
     const [clipContainWidth] = getImageSize(clipRect.width, clipRect.height, ...containerSize);
     return clipContainWidth / clipRect.width;
@@ -66,7 +68,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
 
   const [dx, dy] = useMemo(() => {
     const centerX = width / 2;
-    const centerY = height / 2;
+    const centerY = (height * 0.8) / 2;
 
     const clipCenterX = group.x + (clipRect.x + clipRect.width / 2) * basicScaleRatio;
 
@@ -190,6 +192,11 @@ const EditorStage: ComponentType<EditorProps> = () => {
   const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
     if (activeTool === 'Pencil' || activeTool === 'Blur') {
       handleDrawStart();
+    } else if (e.target.className === 'Text') {
+      e.target.moveTo(layer.current!);
+      trRef.current?.nodes([e.target]);
+    } else {
+      trRef.current?.nodes([]);
     }
   };
 
@@ -232,6 +239,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
         onTouchEnd={handleTouchEnd}
       >
         <Layer ref={layer}>
+          {/* <Rect width={group.width} height={group.height} fill='red'></Rect> */}
           {/* scale group */}
           <Group
             id='scale'
@@ -268,10 +276,21 @@ const EditorStage: ComponentType<EditorProps> = () => {
               <Line key={index} {...line} />
             ))}
           </Group>
+          <Transformer
+            ref={trRef}
+            rotateEnabled={false}
+            anchorStroke='rgba(0,0,0,0)'
+            anchorFill='rgba(0,0,0,0)'
+            borderStroke='#ccc'
+            keepRatio={true}
+          />
         </Layer>
       </Stage>
       {activeTool === 'Cut' && <ClipStage onCutDone={handleCut} />}
-      <Toolbar onAddText={handleTextAdd} />
+      {activeTool === 'Words' && (
+        <WordInput onDone={handleTextAdd} onCancel={() => handleSelectTool(null)} />
+      )}
+      <Toolbar />
     </StageContainer>
   );
 };

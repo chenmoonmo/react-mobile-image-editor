@@ -13,7 +13,7 @@ import useWordInput from 'utils/hooks/useWordInput';
 import { ToolUnion } from 'utils/constants';
 
 type ToolBarProps = {
-  onAddText: (word: string) => unknown;
+  // onAddText: (word: string) => unknown;
 };
 
 const ToolsMap: { icon: ReactNode; name: ToolUnion }[] = [
@@ -29,7 +29,7 @@ const ToolContainer = styled.div`
   bottom: 0;
   left: 0;
   width: 100%;
-  padding-bottom: 60px;
+  padding-bottom: 20px;
   background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);
 `;
 
@@ -87,9 +87,6 @@ const ColorItem = styled.div<{ color: string; currentColor: string }>`
 `;
 
 const ColorSelector = styled.div`
-  position: absolute;
-  bottom: 130px;
-  left: 0;
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -97,7 +94,7 @@ const ColorSelector = styled.div`
   padding: 0 30px;
 `;
 
-const Toolbar: ComponentType<ToolBarProps> = ({ onAddText }) => {
+const Toolbar: ComponentType<ToolBarProps> = () => {
   const { activeTool, pencilConfig, editorColors, handleSelectTool, changeColor } = useEditor();
 
   const { undo } = useHistory();
@@ -114,8 +111,7 @@ const Toolbar: ComponentType<ToolBarProps> = ({ onAddText }) => {
         undo();
         break;
       case 'Words':
-        handleSelectTool(null);
-        startInput('', onAddText);
+        handleSelectTool('Words');
         break;
       case 'Cut':
         handleSelectTool(tool);
@@ -139,8 +135,7 @@ const Toolbar: ComponentType<ToolBarProps> = ({ onAddText }) => {
           ))}
         </ColorSelector>
       )}
-
-      {activeTool !== 'Cut' && (
+      {!(['Words', 'Cut'] as any[]).includes(activeTool) && (
         <ToolbarContainer>
           {ToolsMap.map((tool) => (
             <ToolbarItem
