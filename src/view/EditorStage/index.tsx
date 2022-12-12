@@ -1,6 +1,6 @@
 import { Layer, Stage, Line, Image, Text, Group, Transformer } from 'react-konva';
 
-import React, { ComponentType, useEffect, useMemo, useRef, useState } from 'react';
+import React, { ComponentType, useMemo, useRef, useState } from 'react';
 import Konva from 'konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
@@ -10,6 +10,8 @@ import { getImageSize, rotatePoint } from 'utils/utils';
 import ClipStage from 'view/ClipStage';
 import Blurs from 'view/Blurs';
 import WordInput from 'view/WordInput';
+import { ReactComponent as IconDelete } from 'assets/icons/icon-delete.svg';
+import { css } from '@emotion/react';
 
 type EditorProps = {};
 
@@ -36,6 +38,36 @@ const StageContainer = styled.div`
     bottom: 0;
     height: 180px;
     background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);
+  }
+`;
+
+const DeleteArea = styled.div<{ isActive: boolean }>`
+  ${(props) => css`
+      --fill-color: ${props.isActive? '#ff6650' : '#0096ff'} ;
+  `}
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 150px;
+  height: 80px;
+  padding: 14px 0 15px;
+  background: #e2f0fe;
+  box-shadow: 0px 0px 15px 0px rgba(0, 150, 255, 0.6);
+  border-radius: 10px;
+  border: 1px solid var(--fill-color);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fill-color);
+  line-height: 20px;
+  transform: translateX(-50%);
+  svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--fill-color);;
   }
 `;
 
@@ -195,7 +227,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
     if (activeTool === 'Pencil' || activeTool === 'Blur') {
       handleDrawStart();
     } else if (e.target.className === 'Text') {
-      e.target.moveTo(layer.current!);
+      e.target.moveTo(scaleGroup.current!);
       trRef.current?.nodes([e.target]);
     } else {
       trRef.current?.nodes([]);
@@ -255,28 +287,31 @@ const EditorStage: ComponentType<EditorProps> = () => {
               y: basicScaleRatio,
             }}
             rotation={group.rotation}
-            clipX={clipRect.x}
-            clipY={clipRect.y}
-            clipHeight={clipRect.height}
-            clipWidth={clipRect.width}
           >
-            <Image ref={currentImage} image={image} width={group.width} height={group.height} />
-            <Blurs currentBlur={currentBlurPos} />
-            {texts.map((text, index) => (
-              <Text
-                key={index}
-                id={`text-${index}`}
-                {...text}
-                x={text.x}
-                y={text.y}
-                draggable={true}
-                onDragMove={handleTextDragMove}
-                onDragEnd={handleTextDragEnd}
-              />
-            ))}
-            {lines.map((line, index) => (
-              <Line key={index} {...line} />
-            ))}
+            <Group
+              clipX={clipRect.x}
+              clipY={clipRect.y}
+              clipHeight={clipRect.height}
+              clipWidth={clipRect.width}
+            >
+              <Image ref={currentImage} image={image} width={group.width} height={group.height} />
+              <Blurs currentBlur={currentBlurPos} />
+              {texts.map((text, index) => (
+                <Text
+                  key={index}
+                  id={`text-${index}`}
+                  {...text}
+                  x={text.x}
+                  y={text.y}
+                  draggable={true}
+                  onDragMove={handleTextDragMove}
+                  onDragEnd={handleTextDragEnd}
+                />
+              ))}
+              {lines.map((line, index) => (
+                <Line key={index} {...line} />
+              ))}
+            </Group>
           </Group>
           <Transformer
             ref={trRef}
@@ -292,6 +327,10 @@ const EditorStage: ComponentType<EditorProps> = () => {
       {activeTool === 'Words' && (
         <WordInput onDone={handleTextAdd} onCancel={() => handleSelectTool(null)} />
       )}
+      <DeleteArea isActive>
+        <IconDelete></IconDelete>
+        <div>Drag here to delete</div>
+      </DeleteArea>
       <Toolbar />
     </StageContainer>
   );

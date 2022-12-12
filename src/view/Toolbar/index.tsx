@@ -9,7 +9,6 @@ import { ReactComponent as IconBlur } from 'assets/icons/icon-blur.svg';
 import { ReactComponent as IconRecall } from 'assets/icons/icon-recall.svg';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
-import useWordInput from 'utils/hooks/useWordInput';
 import { ToolUnion } from 'utils/constants';
 
 type ToolBarProps = {
@@ -96,10 +95,7 @@ const ColorSelector = styled.div`
 
 const Toolbar: ComponentType<ToolBarProps> = () => {
   const { activeTool, pencilConfig, editorColors, handleSelectTool, changeColor } = useEditor();
-
   const { undo } = useHistory();
-
-  const { startInput } = useWordInput();
 
   const isColorSelectorShow = useMemo(() => {
     return ['Pencil'].includes(activeTool!);
