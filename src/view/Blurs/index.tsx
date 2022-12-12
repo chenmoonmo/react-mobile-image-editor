@@ -1,12 +1,11 @@
-import Konva from 'konva';
-import { ComponentType, useEffect, useMemo, useRef } from 'react';
+import { ComponentType, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Group, Rect } from 'react-konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import { generateImageData } from 'utils/utils';
 
 type BlursPropsType = {
-  currentBlur: { x: number; y: number }[];
+  currentBlur?: { x: number; y: number }[];
 };
 
 const tileHeight = 10;
@@ -58,13 +57,14 @@ const Tile: ComponentType<{ tile: any }> = ({ tile }) => {
   );
 };
 
-const Blurs: ComponentType<BlursPropsType> = ({ currentBlur }) => {
+const Blurs: ComponentType<BlursPropsType> = ({ currentBlur = [] }) => {
   const { width, height } = useEditor();
   const { image, group, blurs } = useHistory();
 
   const tiles = useRef([] as any[]);
   const tileRowSize = Math.ceil(height / tileHeight);
   const tileColumnSize = Math.ceil(width / tileWidth);
+  const [_, upadate] = useState({});
 
   const getTilesByPoint = (x: number, y: number, strokeWidth: number) => {
     const ts: any = [];
@@ -86,70 +86,61 @@ const Blurs: ComponentType<BlursPropsType> = ({ currentBlur }) => {
   };
 
   const currentTiles = useMemo(() => {
-    const tiles: any[] = [];
+    const posTotiles: any[] = [];
     currentBlur.forEach((pos) => {
-      tiles.push(...getTilesByPoint(pos.x, pos.y, 5));
+      posTotiles.push(...getTilesByPoint(pos.x, pos.y, 5));
     });
-    return tiles;
-  }, [currentBlur]);
+    return posTotiles;
+  }, [currentBlur, _]);
 
   const bluredTiles = useMemo(() => {
-    const tiles: any[] = [];
+    const posTotiles: any[] = [];
     blurs.forEach((currentBlur) => {
       currentBlur.forEach((pos: any) => {
-        tiles.push(...getTilesByPoint(pos.x, pos.y, 5));
+        posTotiles.push(...getTilesByPoint(pos.x, pos.y, 5));
       });
     });
-    return tiles;
-  }, [blurs]);
+    return posTotiles;
+  }, [blurs, _]);
 
   useEffect(() => {
-    if (image) {
-      const imageData = generateImageData(image, group.width, group.height);
-      for (let i = 0; i < tileRowSize; i++) {
-        for (let j = 0; j < tileColumnSize; j++) {
-          const tile = {
-            row: i,
-            column: j,
-            pixelWidth: tileWidth,
-            pixelHeight: tileHeight,
-            data: [],
-          };
+    const imageData = generateImageData(image, group.width, group.height);
+    for (let i = 0; i < tileRowSize; i++) {
+      for (let j = 0; j < tileColumnSize; j++) {
+        const tile = {
+          row: i,
+          column: j,
+          pixelWidth: tileWidth,
+          pixelHeight: tileHeight,
+          data: [],
+        };
 
-          let data: any = [];
-          // 转换为像素图形下，起始像素位置
-          const pixelPosition = (width * tileHeight * tile.row + tile.column * tileWidth) * 4;
-          // 转换为像素图形下，包含多少行
-          const pixelRowAmount = tile.pixelHeight;
-          // 计算，转换为像素图形使，一个贴片所包含的所有像素数据。先遍历贴片范围内的每一列，每一列中再单独统计行的像素数量
-          for (let i = 0; i < pixelRowAmount; i++) {
-            // 当前列的起始像素位置
-            const position = pixelPosition + width * 4 * i;
-            // 贴片范围内一行的像素数据，等于贴片宽度 * 4
-            data = [...data, ...imageData.data.slice(position, position + tile.pixelWidth * 4)];
-          }
-          tile.data = data;
-          tiles.current.push(tile);
+        let data: any = [];
+        // 转换为像素图形下，起始像素位置
+        const pixelPosition = (width * tileHeight * tile.row + tile.column * tileWidth) * 4;
+        // 转换为像素图形下，包含多少行
+        const pixelRowAmount = tile.pixelHeight;
+        // 计算，转换为像素图形使，一个贴片所包含的所有像素数据。先遍历贴片范围内的每一列，每一列中再单独统计行的像素数量
+        for (let i = 0; i < pixelRowAmount; i++) {
+          // 当前列的起始像素位置
+          const position = pixelPosition + width * 4 * i;
+          // 贴片范围内一行的像素数据，等于贴片宽度 * 4
+          data = [...data, ...imageData.data.slice(position, position + tile.pixelWidth * 4)];
         }
+        tile.data = data;
+        tiles.current.push(tile);
       }
     }
+    upadate({});
   }, [image]);
 
   return (
-    <>
-      {currentBlur && (
-        <Group>
-          {currentTiles.map((tile: any, index) => (
-            <Tile key={`${index}-${tile.row}-${tile.column}`} tile={tile} />
-          ))}
-        </Group>
+    <Group id="blur-group">
+      {[...currentTiles, ...bluredTiles].map(
+        (tile: any, index) =>
+          tile && <Tile key={`${index}-${tile.row}-${tile.column}`} tile={tile} />
       )}
-      <Group>
-        {bluredTiles.map((tile: any, index) => (
-          <Tile key={`${index}-${tile.row}-${tile.column}`} tile={tile} />
-        ))}
-      </Group>
-    </>
+    </Group>
   );
 };
 

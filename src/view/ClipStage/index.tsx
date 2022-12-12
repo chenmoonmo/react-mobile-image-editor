@@ -1,6 +1,5 @@
 import styled from '@emotion/styled';
 import Konva from 'konva';
-import { Box } from 'konva/lib/shapes/Transformer';
 import { ComponentType, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Group, Rect, Stage, Layer, Image, Text, Line, Transformer } from 'react-konva';
 import useEditor from 'utils/hooks/useEditor';
@@ -17,6 +16,7 @@ import {
 import { useAnchor } from 'utils/hooks/useAnchor';
 import image2 from '../../image.png';
 import useImage from 'use-image';
+import Blurs from 'view/Blurs';
 
 type ClipStageProps = {
   onCutDone: (size: any, rotation: number) => unknown;
@@ -340,6 +340,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
           >
             <Group ref={scaleGroup}>
               <Image ref={currentImage} image={image} width={group.width} height={group.height} />
+              <Blurs key="clipBlur" />
               {texts.map((text, index) => (
                 <Text key={index} draggable {...text} />
               ))}
