@@ -1,4 +1,4 @@
-import { Layer, Stage, Line, Image, Text, Group, Transformer, Rect } from 'react-konva';
+import { Layer, Stage, Line, Image, Text, Group, Transformer } from 'react-konva';
 
 import React, { ComponentType, useEffect, useMemo, useRef, useState } from 'react';
 import Konva from 'konva';
@@ -11,8 +11,7 @@ import ClipStage from 'view/ClipStage';
 import Blurs from 'view/Blurs';
 import WordInput from 'view/WordInput';
 
-type EditorProps = {
-};
+type EditorProps = {};
 
 const StageContainer = styled.div`
   position: relative;
@@ -138,21 +137,24 @@ const EditorStage: ComponentType<EditorProps> = () => {
   };
 
   const handleTextAdd = (text: string) => {
-    const fontSize = textConfig.fontSize! / basicScaleRatio;
-    const maxWidth = textConfig!.width / basicScaleRatio;
-    const textWidth = text.length * fontSize > maxWidth ? maxWidth : text.length * fontSize;
-    setTexts((preTexts) => [
-      ...preTexts,
-      {
-        ...textConfig,
-        fontSize,
-        text,
-        align: 'center',
-        width: textWidth,
-        x: clipRect.x + clipRect.width / 2 - textWidth / 2,
-        y: clipRect.y + clipRect.height / 2,
-      },
-    ]);
+    if (text) {
+      const fontSize = textConfig.fontSize! / basicScaleRatio;
+      const maxWidth = textConfig!.width / basicScaleRatio;
+      const textWidth = text.length * fontSize > maxWidth ? maxWidth : text.length * fontSize;
+      setTexts((preTexts) => [
+        ...preTexts,
+        {
+          ...textConfig,
+          fontSize,
+          text,
+          align: 'center',
+          width: textWidth,
+          x: clipRect.x + clipRect.width / 2 - textWidth / 2,
+          y: clipRect.y + clipRect.height / 2,
+        },
+      ]);
+      handleSelectTool(null);
+    }
   };
 
   const handleTextDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {

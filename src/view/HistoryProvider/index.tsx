@@ -93,11 +93,15 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
   };
 
   const handleRedo = () => {
-    history.current?.redo().get();
+    if (history.current?.hasRedo) {
+      history.current?.redo().get();
+    }
   };
 
   const handleUndo = () => {
-    history.current?.undo().get();
+    if (history.current?.hasUndo) {
+      history.current?.undo().get();
+    }
   };
 
   useLayoutEffect(() => {
