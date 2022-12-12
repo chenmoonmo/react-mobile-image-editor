@@ -38,6 +38,8 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
     blurs: [],
   });
 
+  const [isInt, setIsInt] = useState(false);
+
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -57,6 +59,16 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
       lines: callback(stateRef.current.lines),
     });
   };
+
+  
+  const handleBlurChange: UpdateFunction<HistoryContextType['blurs']> = (callback) => {
+    history.current?.pushSync({
+      ...stateRef.current,
+      blurs: callback(stateRef.current.blurs),
+    });
+  };
+
+  
 
   const handleTextChange: UpdateFunction<HistoryContextType['texts']> = (callback) => {
     history.current?.pushSync({
@@ -141,6 +153,8 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
         };
       });
 
+      setIsInt(true);
+
       console.log(history.current);
     }
   }, [imageStatus]);
@@ -152,13 +166,14 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
         image: mainImage,
         setGroup: handleGroupChange,
         setLines: handleLineChange,
+        setBlurs: handleBlurChange,
         setTexts: handleTextChange,
         setImage: handleImagechange,
         redo: handleRedo,
         undo: handleUndo,
       }}
     >
-      {children}
+      {isInt && children}
     </HistroyContext.Provider>
   );
 };

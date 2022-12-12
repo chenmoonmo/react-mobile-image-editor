@@ -1,6 +1,6 @@
 import { Layer, Stage, Line, Image, Text, Group } from 'react-konva';
 
-import React, { ComponentType, useMemo, useRef } from 'react';
+import React, { ComponentType, useEffect, useMemo, useRef, useState } from 'react';
 import Konva from 'konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
@@ -8,6 +8,7 @@ import styled from '@emotion/styled';
 import Toolbar from 'view/Toolbar';
 import { getImageSize, rotatePoint } from 'utils/utils';
 import ClipStage from 'view/ClipStage';
+import Blurs from 'view/Blurs';
 
 type EditorProps = {
   image: string;
@@ -41,7 +42,10 @@ const StageContainer = styled.div`
 
 const EditorStage: ComponentType<EditorProps> = () => {
   const { width, height, activeTool, pencilConfig, textConfig, handleSelectTool } = useEditor();
-  const { image, texts, lines, group, clipRect, setLines, setTexts, setImage } = useHistory();
+  const { image, texts, lines, group, clipRect, setLines, setTexts, setImage, setBlurs } =
+    useHistory();
+
+  const [currentBlurPos, setBlurPos] = useState<{ x: number; y: number }[]>([]);
 
   const stage = useRef<Konva.Stage>(null);
   const layer = useRef<Konva.Layer>(null);
@@ -82,39 +86,53 @@ const EditorStage: ComponentType<EditorProps> = () => {
   const handleDrawStart = () => {
     const drawTarget = scaleGroup.current!;
     const pos = drawTarget.getRelativePointerPosition()!;
-    currentLine.current = new Konva.Line({
-      ...pencilConfig,
-      strokeWidth: pencilConfig.strokeWidth! / basicScaleRatio,
-      points: pos ? [pos.x, pos.y, pos.x, pos.y] : [],
-    });
-    drawTarget.add(currentLine.current);
+    if (activeTool === 'Pencil') {
+      currentLine.current = new Konva.Line({
+        ...pencilConfig,
+        strokeWidth: pencilConfig.strokeWidth! / basicScaleRatio,
+        points: pos ? [pos.x, pos.y, pos.x, pos.y] : [],
+      });
+      drawTarget.add(currentLine.current);
+    } else if (activeTool === 'Blur') {
+      setBlurPos((preBlurPos) => [...preBlurPos, pos]);
+    }
   };
 
   const handleDraw = () => {
     const lastLine = currentLine.current;
-    if (lastLine === null) {
-      return;
-    }
     const pos = scaleGroup.current?.getRelativePointerPosition()!;
-    const newPoints = lastLine.points().concat([pos.x, pos.y]);
-    lastLine.points(newPoints);
+    if (activeTool === 'Pencil' && lastLine) {
+      const newPoints = lastLine.points().concat([pos.x, pos.y]);
+      lastLine.points(newPoints);
+    }
+    if (activeTool === 'Blur') {
+      setBlurPos((preBlurPos) => [...preBlurPos, pos]);
+    }
   };
 
   const handleDrawEnd = () => {
-    setLines((preLines) => {
-      return [
-        ...preLines,
-        {
-          ...pencilConfig,
-          strokeWidth: pencilConfig.strokeWidth! / basicScaleRatio,
-          points: currentLine.current?.points(),
-        },
-      ];
-    });
-    setTimeout(() => {
-      currentLine.current?.destroy();
-      currentLine.current = null;
-    }, 50);
+    const lastLine = currentLine.current;
+    if (activeTool === 'Pencil' && lastLine) {
+      setLines((preLines) => {
+        return [
+          ...preLines,
+          {
+            ...pencilConfig,
+            strokeWidth: pencilConfig.strokeWidth! / basicScaleRatio,
+            points: lastLine.points(),
+          },
+        ];
+      });
+      setTimeout(() => {
+        lastLine.destroy();
+        currentLine.current = null;
+      }, 50);
+    }
+
+    if (activeTool === 'Blur') {
+      setBlurs((preBlurs) => [...preBlurs, currentBlurPos]);
+      setBlurPos([]);
+    }
   };
 
   const handleTextAdd = (text: string) => {
@@ -164,56 +182,39 @@ const EditorStage: ComponentType<EditorProps> = () => {
   };
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    switch (activeTool) {
-      case 'Pencil':
-        handleDrawStart();
-        break;
+    if (activeTool === 'Pencil' || activeTool === 'Blur') {
+      handleDrawStart();
     }
   };
 
   const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    switch (activeTool) {
-      case 'Pencil':
-        handleDrawStart();
-        break;
+    if (activeTool === 'Pencil' || activeTool === 'Blur') {
+      handleDrawStart();
     }
   };
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     e.evt.preventDefault();
-    switch (activeTool) {
-      case 'Pencil':
-        handleDraw();
-        break;
+    if (activeTool === 'Pencil' || activeTool === 'Blur') {
+      handleDraw();
     }
   };
 
   const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
-    switch (activeTool) {
-      case 'Pencil':
-        handleDraw();
-        break;
-      case 'Cut':
-        // handleScale(e);
-        break;
+    if (activeTool === 'Pencil' || activeTool === 'Blur') {
+      handleDraw();
     }
   };
 
   const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    switch (activeTool) {
-      case 'Pencil':
-        handleDrawEnd();
-        break;
+    if (activeTool === 'Pencil' || activeTool === 'Blur') {
+      handleDrawEnd();
     }
   };
   const handleTouchEnd = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    switch (activeTool) {
-      case 'Pencil':
-        handleDrawEnd();
-        break;
-      case 'Cut':
-        break;
+    if (activeTool === 'Pencil' || activeTool === 'Blur') {
+      handleDrawEnd();
     }
   };
 
@@ -250,6 +251,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
             clipWidth={clipRect.width}
           >
             <Image ref={currentImage} image={image} width={group.width} height={group.height} />
+            <Blurs currentBlur={currentBlurPos} />
             {texts.map((text, index) => (
               <Text
                 key={index}

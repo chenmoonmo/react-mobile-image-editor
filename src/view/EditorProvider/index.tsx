@@ -5,12 +5,14 @@ import EditorContext from 'utils/context/EditorContext';
 type EditorProviderProps = {
   children: ReactNode;
   editorColors?: string[];
+  blurConfig?: PencilConfig;
   width: number;
   height: number;
 };
 
 const EditorProvider: ComponentType<EditorProviderProps> = ({
-  children,
+  width = 0,
+  height = 0,
   editorColors = [
     '#FF2A1A',
     '#000000',
@@ -21,8 +23,13 @@ const EditorProvider: ComponentType<EditorProviderProps> = ({
     '#19A049',
     '#24A8D0',
   ],
-  width = 0,
-  height = 0,
+  blurConfig = {
+    stroke: '#eaeaeaeb',
+    strokeWidth: 30,
+    lineCap: 'round',
+    lineJoin: 'round',
+  },
+  children,
 }) => {
   const [pencilConfig, setPencilConfig] = useState<PencilConfig>({
     stroke: editorColors[0],
@@ -35,7 +42,7 @@ const EditorProvider: ComponentType<EditorProviderProps> = ({
     fontSize: 30,
     fill: editorColors[0],
     wrap: 'word',
-    width: width * 0.9
+    width: width * 0.9,
   });
 
   const [activeTool, setActiveTool] = useState<null | ToolUnion>(null);
@@ -65,6 +72,7 @@ const EditorProvider: ComponentType<EditorProviderProps> = ({
         width,
         height: height - 100,
         pencilConfig,
+        blurConfig,
         textConfig,
         editorColors,
         activeTool,
