@@ -18,15 +18,6 @@ export const getImageSize = (
     : ([width, (1 / imageRatio) * width] as const);
 };
 
-export const getPosition = (
-  imageWidth: number,
-  imageHeight: number,
-  width: number,
-  height: number
-) => {
-  return [(width - imageWidth) / 2, (height - imageHeight) / 2] as const;
-};
-
 export function rotatePoint(x: number, y: number, r: number) {
   const rRadians = r * (Math.PI / 180);
   const xOffset = x * Math.cos(rRadians) - y * Math.sin(rRadians);
@@ -43,4 +34,20 @@ export function getCenter(p1: Point, p2: Point) {
     x: (p1.x + p2.x) / 2,
     y: (p1.y + p2.y) / 2,
   };
+}
+
+export function getRotateDistance(dx: number, dy: number, r: number) {
+  const rotationStage = ((r / 90) % 4) + 1;
+  switch (rotationStage) {
+    case 1:
+      return [dx, dy];
+    case 2:
+      return [dy, -dx];
+    case 3:
+      return [-dx, -dy];
+    case 4:
+      return [-dy, dx];
+    default:
+      return [dx, dy];
+  }
 }

@@ -6,7 +6,14 @@ import { Group, Rect, Stage, Layer, Image, Text, Line, Transformer } from 'react
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import { ReactComponent as IconRotate } from 'assets/icons/icon-rotate.svg';
-import { getCenter, getDistance, getImageSize, Point, rotatePoint } from 'utils/utils';
+import {
+  getCenter,
+  getDistance,
+  getImageSize,
+  getRotateDistance,
+  Point,
+  rotatePoint,
+} from 'utils/utils';
 import { useAnchor } from 'utils/hooks/useAnchor';
 import image2 from '../../image.png';
 import useImage from 'use-image';
@@ -200,8 +207,10 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
       touchTarget.scaleX(scale);
       touchTarget.scaleY(scale);
 
-      const dx = newCenter.x - lastCenter.current.x;
-      const dy = newCenter.y - lastCenter.current.y;
+      let dx = newCenter.x - lastCenter.current.x;
+      let dy = newCenter.y - lastCenter.current.y;
+
+      [dx, dy] = getRotateDistance(dx, dy, rotation);
 
       const newPos = {
         x: newCenter.x - pointTo.x * scale + dx,
@@ -227,8 +236,10 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
         return (lastCenter.current = p1);
       }
 
-      const dx = p1.x - lastCenter.current.x;
-      const dy = p1.y - lastCenter.current.y;
+      let dx = p1.x - lastCenter.current.x;
+      let dy = p1.y - lastCenter.current.y;
+
+      [dx, dy] = getRotateDistance(dx, dy, rotation);
 
       touchTarget.move({
         x: dx,

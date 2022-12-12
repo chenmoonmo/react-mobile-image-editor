@@ -114,11 +114,11 @@ const Toolbar: ComponentType<ToolBarProps> = ({ onAddText }) => {
         undo();
         break;
       case 'Words':
-        handleSelectTool('Words');
+        handleSelectTool(null);
         startInput('', onAddText);
         break;
       case 'Cut':
-        // handleSelectTool(tool);
+        handleSelectTool(tool);
         break;
       default:
         handleSelectTool(tool);
