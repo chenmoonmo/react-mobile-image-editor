@@ -64,7 +64,7 @@ const Blurs: ComponentType<BlursPropsType> = ({ currentBlur = [] }) => {
   const tiles = useRef([] as any[]);
   const tileRowSize = Math.ceil(height / tileHeight);
   const tileColumnSize = Math.ceil(width / tileWidth);
-  const [_, upadate] = useState({});
+  const [isInt, setIsInt] = useState(false);
 
   const getTilesByPoint = (x: number, y: number, strokeWidth: number) => {
     const ts: any = [];
@@ -87,21 +87,23 @@ const Blurs: ComponentType<BlursPropsType> = ({ currentBlur = [] }) => {
 
   const currentTiles = useMemo(() => {
     const posTotiles: any[] = [];
+    if (!isInt) return posTotiles;
     currentBlur.forEach((pos) => {
       posTotiles.push(...getTilesByPoint(pos.x, pos.y, 5));
     });
     return posTotiles;
-  }, [currentBlur, _]);
+  }, [currentBlur, isInt]);
 
   const bluredTiles = useMemo(() => {
     const posTotiles: any[] = [];
+    if (!isInt) return posTotiles;
     blurs.forEach((currentBlur) => {
       currentBlur.forEach((pos: any) => {
         posTotiles.push(...getTilesByPoint(pos.x, pos.y, 5));
       });
     });
     return posTotiles;
-  }, [blurs, _]);
+  }, [blurs, isInt]);
 
   useEffect(() => {
     const imageData = generateImageData(image, group.width, group.height);
@@ -131,16 +133,28 @@ const Blurs: ComponentType<BlursPropsType> = ({ currentBlur = [] }) => {
         tiles.current.push(tile);
       }
     }
-    upadate({});
+    setIsInt(true);
   }, [image]);
 
   return (
-    <Group id="blur-group">
-      {[...currentTiles, ...bluredTiles].map(
-        (tile: any, index) =>
-          tile && <Tile key={`${index}-${tile.row}-${tile.column}`} tile={tile} />
+    <>
+      {currentTiles.length > 0 && (
+        <Group>
+          {currentTiles.map(
+            (tile: any, index) =>
+              tile && <Tile key={`${index}-${tile.row}-${tile.column}`} tile={tile} />
+          )}
+        </Group>
       )}
-    </Group>
+      {bluredTiles.length > 0 && (
+        <Group>
+          {bluredTiles.map(
+            (tile: any, index) =>
+              tile && <Tile key={`${index}-${tile.row}-${tile.column}`} tile={tile} />
+          )}
+        </Group>
+      )}
+    </>
   );
 };
 

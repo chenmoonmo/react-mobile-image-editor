@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import Konva from 'konva';
-import { ComponentType, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ComponentType, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Group, Rect, Stage, Layer, Image, Text, Line, Transformer } from 'react-konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
@@ -63,8 +63,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const { image, texts, lines, group, clipRect } = useHistory();
   let { width, height, handleSelectTool } = useEditor();
 
-  const [fillimage] = useImage(image2);
-
   const drawAnchors = useAnchor();
 
   const scaleGroup = useRef<Konva.Group>(null);
@@ -80,7 +78,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   const [clipInfo, setClipInfo] = useState(clipRect);
   const [rotation, setRotaion] = useState(group.rotation);
-
   const basicScaleRatio = useMemo(() => {
     const rotationStage = ((rotation / 90) % 4) + 1;
     let containerSize = [width, height] as const;
@@ -109,6 +106,33 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   const groupX = group.x - dx;
   const groupY = group.y - dy;
+
+  const clipRectFill = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = clipInfo.width * basicScaleRatio;
+    canvas.height = clipInfo.height * basicScaleRatio;
+    const ctx = canvas.getContext('2d')!;
+    ctx.strokeStyle = '#0096FF';
+    ctx.lineWidth = 1;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.lineTo(0, canvas.height / 3);
+    ctx.lineTo(width, canvas.height / 3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.lineTo(0, (canvas.height / 3) * 2);
+    ctx.lineTo(width, (canvas.height / 3) * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.lineTo(canvas.width / 3, 0);
+    ctx.lineTo(canvas.width / 3, height);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.lineTo((canvas.width / 3) * 2, 0);
+    ctx.lineTo((canvas.width / 3) * 2, height);
+    ctx.stroke();
+    return canvas as unknown as HTMLImageElement;
+  }, [clipInfo.width, clipInfo.height]);
 
   const handleTransformEnd = () => {
     const node = reRef.current!;
@@ -162,7 +186,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
     setRotaion((preRotation) => preRotation + 90);
   };
 
-  // TODO: 缩放和图片裁剪位置关系
   const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
     const touchTarget = scaleGroup.current!;
@@ -328,7 +351,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
         onTouchEnd={handleTouchEnd}
       >
         <Layer>
-          {/* TODO: 允许平移图片 和 双指缩放 */}
           <Group
             x={groupX}
             y={groupY}
@@ -340,7 +362,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
           >
             <Group ref={scaleGroup}>
               <Image ref={currentImage} image={image} width={group.width} height={group.height} />
-              <Blurs key="clipBlur" />
+              <Blurs key='clipBlur' />
               {texts.map((text, index) => (
                 <Text key={index} draggable {...text} />
               ))}
@@ -355,10 +377,12 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
               y={clipInfo.y}
               width={clipInfo.width}
               height={clipInfo.height}
-              // fillPatternImage={fillimage}
-              // fillPriority='pattern'
-              fill='green'
-              opacity={0.3}
+              fillPatternImage={clipRectFill}
+              fillPriority='pattern'
+              fillPatternScale={{
+                x: 1 / basicScaleRatio,
+                y: 1 / basicScaleRatio,
+              }}
               onTransformEnd={handleTransformEnd}
             />
           </Group>

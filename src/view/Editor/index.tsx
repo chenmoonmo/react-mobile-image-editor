@@ -11,7 +11,6 @@ type EditorProps = {
 };
 // TODO: i18n
 // TODO: 配置项完善
-// TODO: 马赛克
 
 const Editor: ComponentType<EditorProps> = ({ image, width, height }) => {
   return (
