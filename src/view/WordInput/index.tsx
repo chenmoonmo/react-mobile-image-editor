@@ -1,10 +1,6 @@
 import { css } from '@emotion/react';
 import styled from '@emotion/styled';
-<<<<<<< HEAD
-import React, { ComponentType, useEffect, useRef  } from 'react';
-=======
 import React, { ComponentType, useEffect, useRef } from 'react';
->>>>>>> rebuild
 import ReactDOM from 'react-dom';
 import useEditor from 'utils/hooks/useEditor';
 import useVisualViewport from 'utils/hooks/useVisualViewport';
