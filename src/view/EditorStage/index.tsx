@@ -1,6 +1,6 @@
 import { Layer, Stage, Line, Image, Text, Group, Transformer } from 'react-konva';
 
-import React, { ComponentType, useMemo, useRef, useState } from 'react';
+import React, { ComponentType, useEffect, useMemo, useRef, useState } from 'react';
 import Konva from 'konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
@@ -12,6 +12,7 @@ import Blurs from 'view/Blurs';
 import WordInput from 'view/WordInput';
 import { ReactComponent as IconDelete } from 'assets/icons/icon-delete.svg';
 import { css } from '@emotion/react';
+import { Html } from 'react-konva-utils';
 
 type EditorProps = {};
 
@@ -43,14 +44,13 @@ const StageContainer = styled.div`
   }
 `;
 
-const DeleteArea = styled.div<{ isActive: boolean }>`
+const DeleteArea = styled.div<{ deleteAreaStatus: DeleteAreaStatus }>`
   ${(props) => css`
-    --fill-color: ${props.isActive ? '#ff6650' : '#0096ff'};
+    --optaicy: ${props.deleteAreaStatus === 'active' ? 0.9 : 1};
+    --fill-color: ${props.deleteAreaStatus === 'active' ? '#ff6650' : '#0096ff'};
+    --is-show: ${props.deleteAreaStatus === 'none' ? 'none' : 'flex'};
   `}
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  display: flex;
+  display: var(--is-show);
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
@@ -65,11 +65,13 @@ const DeleteArea = styled.div<{ isActive: boolean }>`
   font-weight: 500;
   color: var(--fill-color);
   line-height: 20px;
-  transform: translateX(-50%);
+  opacity: var(--optaicy);
+  transition: all 0.1s ease;
   svg {
     width: 24px;
     height: 24px;
     fill: var(--fill-color);
+    transition: inherit;
   }
 `;
 
@@ -86,10 +88,13 @@ const EditorStage: ComponentType<EditorProps> = () => {
   const layer = useRef<Konva.Layer>(null);
 
   const scaleGroup = useRef<Konva.Group>(null);
+  const clipGroup = useRef<Konva.Group>(null);
   const currentImage = useRef<Konva.Image | null>(null);
   const currentLine = useRef<Konva.Line | null>(null);
 
   const trRef = useRef<Konva.Transformer>(null);
+
+  const deleteAreaRef = useRef<Konva.Group | null>(null);
 
   const basicScaleRatio = useMemo(() => {
     const rotationStage = ((group.rotation / 90) % 4) + 1;
@@ -177,6 +182,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
       const fontSize = textConfig.fontSize! / basicScaleRatio;
       const maxWidth = textConfig!.width / basicScaleRatio;
       const textWidth = text.length * fontSize > maxWidth ? maxWidth : text.length * fontSize;
+
       setTexts((preTexts) => [
         ...preTexts,
         {
@@ -185,8 +191,11 @@ const EditorStage: ComponentType<EditorProps> = () => {
           text,
           align: 'center',
           width: textWidth,
-          x: clipRect.x + clipRect.width / 2 - textWidth / 2,
-          y: clipRect.y + clipRect.height / 2,
+          x: group.width / 2,
+          y: group.height / 2,
+          offsetX: textWidth / 2,
+          offsetY: fontSize / 2,
+          rotation: -group.rotation,
         },
       ]);
       handleSelectTool(null);
@@ -197,23 +206,41 @@ const EditorStage: ComponentType<EditorProps> = () => {
     const currentText = e.target;
     const position = currentText.position()!;
     const textHeight = currentText.height();
-    if (position.y + textHeight > group.height) {
-      setDeleteAreaStatus('show');
-    }
-    if (position.y >= group.height + 100) {
+    const deleteAreaTop = deleteAreaRef.current?.y()!;
+    if (position.y >= deleteAreaTop - textHeight) {
       setDeleteAreaStatus('active');
+    } else if (position.y >= group.height) {
+      setDeleteAreaStatus('show');
+    } else {
+      setDeleteAreaStatus('none');
     }
   };
 
   const handleTextDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     const currentText = e.target;
     const index = currentText.attrs.id.slice(-1);
-    const position = currentText.position()!;
-    setTexts((preTexts) => {
-      preTexts[index].x = position.x;
-      preTexts[index].y = position.y;
-      return preTexts;
-    });
+    switch (deleteAreaStatus) {
+      case 'show':
+      case 'none':
+        const position = currentText.position()!;
+        setTexts((preTexts) => {
+          preTexts[index].x = position.x;
+          preTexts[index].y = position.y;
+          return preTexts;
+        });
+        break;
+      case 'active':
+        setTexts((preTexts) => {
+          preTexts.splice(index, 1);
+          return [...preTexts];
+        });
+        break;
+    }
+    if (deleteAreaStatus !== 'none') {
+      currentText?.moveTo(clipGroup.current);
+      trRef.current?.nodes([]);
+      setDeleteAreaStatus('none');
+    }
   };
 
   // TODO: ts
@@ -225,46 +252,50 @@ const EditorStage: ComponentType<EditorProps> = () => {
   };
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    if (activeTool === 'Pencil' || activeTool === 'Blur') {
+    if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
       handleDrawStart();
     }
   };
 
   const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    if (activeTool === 'Pencil' || activeTool === 'Blur') {
+    if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
       handleDrawStart();
     } else if (e.target.className === 'Text') {
       e.target.moveTo(scaleGroup.current!);
       trRef.current?.nodes([e.target]);
-    } else {
+    } else if (e.target === currentImage.current) {
       trRef.current?.nodes([]);
     }
   };
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     e.evt.preventDefault();
-    if (activeTool === 'Pencil' || activeTool === 'Blur') {
+    if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
       handleDraw();
     }
   };
 
   const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
-    if (activeTool === 'Pencil' || activeTool === 'Blur') {
+    if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
       handleDraw();
     }
   };
 
   const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    if (activeTool === 'Pencil' || activeTool === 'Blur') {
+    if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
       handleDrawEnd();
     }
   };
   const handleTouchEnd = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    if (activeTool === 'Pencil' || activeTool === 'Blur') {
+    if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
       handleDrawEnd();
     }
   };
+
+  useEffect(() => {
+    deleteAreaRef.current = stage.current?.findOne('#delete-area') as Konva.Group;
+  }, []);
 
   return (
     <StageContainer>
@@ -280,10 +311,8 @@ const EditorStage: ComponentType<EditorProps> = () => {
         onTouchEnd={handleTouchEnd}
       >
         <Layer ref={layer}>
-          {/* <Rect width={group.width} height={group.height} fill='red'></Rect> */}
           {/* scale group */}
           <Group
-            id='scale'
             ref={scaleGroup}
             x={groupX}
             y={groupY}
@@ -296,6 +325,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
             rotation={group.rotation}
           >
             <Group
+              ref={clipGroup}
               clipX={clipRect.x}
               clipY={clipRect.y}
               clipHeight={clipRect.height}
@@ -319,7 +349,24 @@ const EditorStage: ComponentType<EditorProps> = () => {
                 <Line key={index} {...line} />
               ))}
             </Group>
+            <Html
+              groupProps={{
+                id: 'delete-area',
+                y: height - 120,
+                x: width / 2 - 75,
+                width: 150,
+                height: 80,
+                // offsetX: groupX,
+                // offsetY: groupY,
+              }}
+            >
+              <DeleteArea deleteAreaStatus={deleteAreaStatus}>
+                <IconDelete></IconDelete>
+                <div>Drag here to delete</div>
+              </DeleteArea>
+            </Html>
           </Group>
+
           <Transformer
             ref={trRef}
             rotateEnabled={false}
@@ -334,14 +381,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
       {activeTool === 'Words' && (
         <WordInput onDone={handleTextAdd} onCancel={() => handleSelectTool(null)} />
       )}
-      {deleteAreaStatus !== 'none' ? (
-        <DeleteArea isActive={deleteAreaStatus === 'active'}>
-          <IconDelete></IconDelete>
-          <div>Drag here to delete</div>
-        </DeleteArea>
-      ) : (
-        <Toolbar />
-      )}
+      {deleteAreaStatus === 'none' && <Toolbar />}
     </StageContainer>
   );
 };
