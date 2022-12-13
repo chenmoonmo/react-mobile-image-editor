@@ -306,7 +306,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
     }
 
     const touchTarget = trRef.current!.nodes()[0] as Konva.Text;
-    if (touchTarget.scaleX() > lastTextScale.current) {
+    if (touchTarget && touchTarget.scaleX() > lastTextScale.current) {
       const index = touchTarget.attrs.id.slice(-1);
       setTexts((preTexts) => {
         preTexts[index].scaleX = touchTarget.scaleX();
