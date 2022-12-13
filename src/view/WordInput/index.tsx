@@ -1,8 +1,7 @@
 import { css } from '@emotion/react';
 import styled from '@emotion/styled';
-import React, { ComponentType, ReactNode, useEffect, useRef, useState } from 'react';
-import ReactDOM, { flushSync } from 'react-dom';
-import WordInputContext from 'utils/context/WordInputContext';
+import React, { ComponentType, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import useEditor from 'utils/hooks/useEditor';
 import useVisualViewport from 'utils/hooks/useVisualViewport';
 
@@ -25,6 +24,7 @@ const ColorItem = styled.div`
   border-radius: 50%;
   color: #fff;
   background: #fff;
+  box-sizing: border-box;
   ${ColorItemStyle}
   &::after {
     position: absolute;
@@ -51,12 +51,13 @@ const ColorSelector = styled.div`
   justify-content: space-around;
   width: 100%;
   padding: 0 30px;
+  box-sizing: border-box;
   transition: transform 0.2s ease;
   ${ColorSelectorStyle}
 `;
 
 const WordInputModal = styled.div`
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   display: flex;
@@ -64,6 +65,7 @@ const WordInputModal = styled.div`
   width: 100%;
   height: 100%;
   padding: 100px 15px;
+  box-sizing: border-box;
   background: rgba(0, 0, 0, 0.5);
 `;
 
@@ -97,6 +99,7 @@ const InputActions = styled.div`
   line-height: 16px;
   text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.5);
   z-index: 1000;
+  box-sizing: border-box;
   div {
     position: relative;
     &::after {
