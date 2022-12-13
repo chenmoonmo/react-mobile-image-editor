@@ -1,4 +1,4 @@
-import { ComponentType, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ComponentType, useEffect, useMemo, useRef, useState } from 'react';
 import { Group, Rect } from 'react-konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';

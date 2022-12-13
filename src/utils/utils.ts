@@ -1,5 +1,3 @@
-import Konva from 'konva';
-
 export type Point = {
   x: number;
   y: number;

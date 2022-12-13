@@ -21,7 +21,7 @@ const ClipContainer = styled.div`
 `;
 
 const InputActions = styled.div`
-  position: fixed;
+  position: absolute;
   bottom: 20px;
   left: 0;
   display: flex;
@@ -35,6 +35,7 @@ const InputActions = styled.div`
   line-height: 16px;
   text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.5);
   z-index: 1000;
+  box-sizing: border-box;
   div {
     position: relative;
     &::after {
@@ -122,7 +123,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
     ctx.lineTo((canvas.width / 3) * 2, height);
     ctx.stroke();
     return canvas as unknown as HTMLImageElement;
-  }, [clipInfo.width, clipInfo.height]);
+  }, [clipInfo.width, clipInfo.height,rotation]);
 
   const handleTransformEnd = () => {
     const node = reRef.current!;

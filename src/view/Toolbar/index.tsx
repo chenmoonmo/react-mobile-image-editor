@@ -91,6 +91,7 @@ const ColorSelector = styled.div`
   justify-content: space-around;
   width: 100%;
   padding: 0 30px;
+  box-sizing: border-box;
 `;
 
 const Toolbar: ComponentType<ToolBarProps> = () => {
