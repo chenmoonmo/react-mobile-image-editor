@@ -20,28 +20,7 @@ type DeleteAreaStatus = 'none' | 'show' | 'active';
 
 const StageContainer = styled.div`
   position: relative;
-  width: 100%;
-  height: 100%;
   background: #000;
-  &::before,
-  &::after {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: block;
-    width: 100%;
-    height: 180px;
-    content: '';
-    background: linear-gradient(180deg, rgba(34, 34, 34, 0.94) 0%, rgba(71, 71, 71, 0) 100%);
-    z-index: -1;
-    mix-blend-mode: darken;
-  }
-  &::after {
-    top: unset;
-    bottom: 0;
-    height: 180px;
-    background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);
-  }
 `;
 
 const DeleteArea = styled.div<{ deleteAreaStatus: DeleteAreaStatus }>`
@@ -67,6 +46,7 @@ const DeleteArea = styled.div<{ deleteAreaStatus: DeleteAreaStatus }>`
   line-height: 20px;
   opacity: var(--optaicy);
   transition: all 0.1s ease;
+  box-sizing: border-box;
   svg {
     width: 24px;
     height: 24px;
@@ -147,7 +127,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
       const newPoints = lastLine.points().concat([pos.x, pos.y]);
       lastLine.points(newPoints);
     }
-    if (activeTool === 'Blur') {
+    if (activeTool === 'Blur' && currentBlurPos.length) {
       setBlurPos((preBlurPos) => [...preBlurPos, pos]);
     }
   };
@@ -298,7 +278,12 @@ const EditorStage: ComponentType<EditorProps> = () => {
   }, []);
 
   return (
-    <StageContainer>
+    <StageContainer
+      style={{
+        width,
+        height,
+      }}
+    >
       <Stage
         ref={stage}
         width={width}
@@ -356,8 +341,6 @@ const EditorStage: ComponentType<EditorProps> = () => {
                 x: width / 2 - 75,
                 width: 150,
                 height: 80,
-                // offsetX: groupX,
-                // offsetY: groupY,
               }}
             >
               <DeleteArea deleteAreaStatus={deleteAreaStatus}>
@@ -366,7 +349,6 @@ const EditorStage: ComponentType<EditorProps> = () => {
               </DeleteArea>
             </Html>
           </Group>
-
           <Transformer
             ref={trRef}
             rotateEnabled={false}
