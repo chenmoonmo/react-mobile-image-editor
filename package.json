@@ -1,6 +1,6 @@
 {
   "name": "photo-editor",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "dist/photo-editor.umd.js",
   "module": "dist/photo-editor.es.js",
   "types": "dist/index.d.ts",
@@ -41,6 +41,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^23.0.4",
     "@rollup/plugin-node-resolve": "^15.0.1",
+    "@svgr/rollup": "^6.5.1",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^13.0.0",
     "@testing-library/user-event": "^13.2.1",
@@ -51,7 +52,6 @@
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
     "rimraf": "^3.0.2",
-    "rollup-plugin-copy-assets": "^2.0.3",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-typescript2": "^0.34.1",
     "typescript": "^4.4.2"
