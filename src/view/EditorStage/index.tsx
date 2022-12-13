@@ -10,7 +10,7 @@ import { getImageSize, rotatePoint } from 'utils/utils';
 import ClipStage from 'view/ClipStage';
 import Blurs from 'view/Blurs';
 import WordInput from 'view/WordInput';
-import IconDelete from 'assets/icons/icon-delete.svg';
+import IconDelete from '../../assets/icons/icon-delete.svg';
 import { css } from '@emotion/react';
 import { Html } from 'react-konva-utils';
 

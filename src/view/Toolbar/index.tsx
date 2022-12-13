@@ -2,11 +2,11 @@ import { css } from '@emotion/react';
 import styled from '@emotion/styled';
 import React, { ComponentType, ReactNode, useMemo } from 'react';
 
-import IconPencil from 'assets/icons/icon-pencil.svg';
-import IconWords from 'assets/icons/icon-words.svg';
-import IconCut from 'assets/icons/icon-cut.svg';
-import IconBlur from 'assets/icons/icon-blur.svg';
-import IconRecall from 'assets/icons/icon-recall.svg';
+import IconPencil from '../../assets/icons/icon-pencil.svg';
+import IconWords from '../../assets/icons/icon-words.svg';
+import IconCut from '../../assets/icons/icon-cut.svg';
+import IconBlur from '../../assets/icons/icon-blur.svg';
+import IconRecall from '../../assets/icons/icon-recall.svg';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import { ToolUnion } from 'utils/constants';

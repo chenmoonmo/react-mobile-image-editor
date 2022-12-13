@@ -1,8 +1,7 @@
 import { css } from '@emotion/react';
 import styled from '@emotion/styled';
-import React, { ComponentType, ReactNode, useEffect, useRef, useState } from 'react';
-import ReactDOM, { flushSync } from 'react-dom';
-import WordInputContext from 'utils/context/WordInputContext';
+import React, { ComponentType, useEffect, useRef  } from 'react';
+import ReactDOM from 'react-dom';
 import useEditor from 'utils/hooks/useEditor';
 import useVisualViewport from 'utils/hooks/useVisualViewport';
 

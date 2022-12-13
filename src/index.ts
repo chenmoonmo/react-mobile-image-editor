@@ -1,1 +1,1 @@
-export { default as Editor } from 'view/Editor';
+export { default } from 'view/Editor';
