@@ -108,8 +108,8 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   const clipRectFill = useMemo(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = clipInfo.width * basicScaleRatio;
-    canvas.height = clipInfo.height * basicScaleRatio;
+    canvas.width = clipInfo.width * basicScaleRatio ;
+    canvas.height = clipInfo.height * basicScaleRatio ;
     const ctx = canvas.getContext('2d')!;
     ctx.strokeStyle = '#0096FF';
     ctx.lineWidth = 1;
@@ -190,7 +190,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
     const touchTarget = scaleGroup.current!;
     const touch1 = e.evt.touches[0];
     const touch2 = e.evt.touches[1];
-
     if (touch1 && touch2) {
       if (stageRef.current?.isDragging()) {
         stageRef.current?.stopDrag();
