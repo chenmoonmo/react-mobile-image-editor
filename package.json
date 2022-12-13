@@ -1,6 +1,6 @@
 {
   "name": "photo-editor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/photo-editor.umd.js",
   "module": "dist/photo-editor.es.js",
   "types": "dist/index.d.ts",
