@@ -46,7 +46,7 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
   const [mainImage, imageStatus] = useImage(imageUrl);
 
   const handleDataChange = (state: HistoryState) => {
-    console.log('historyChange', state);
+    // console.log('historyChange', state);
     setState(state);
     stateRef.current = state;
   };
@@ -155,8 +155,7 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
       });
 
       setIsInt(true);
-
-      console.log(history.current);
+      // console.log(history.current);
     }
   }, [imageStatus]);
 

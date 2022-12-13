@@ -4,6 +4,8 @@ import typescript from 'rollup-plugin-typescript2';
 import dts from 'rollup-plugin-dts';
 import svgr from '@svgr/rollup'
 
+import tsTreeshaking from 'rollup-plugin-ts-treeshaking';
+
 import pkg from './package.json';
 
 // eslint-disable-next-line import/no-anonymous-default-export
@@ -22,10 +24,11 @@ export default [
       resolve({
         browser: true,
       }),
+      svgr({icon: true }),
       typescript({
         useTsconfigDeclarationDir: true,
       }),
-      svgr({icon: true }),
+      tsTreeshaking(),
       commonjs(),
     ],
   },

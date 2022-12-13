@@ -6,7 +6,7 @@ import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import styled from '@emotion/styled';
 import Toolbar from 'view/Toolbar';
-import { getImageSize, rotatePoint } from 'utils/utils';
+import { getDistance, getImageSize, rotatePoint } from 'utils/utils';
 import ClipStage from 'view/ClipStage';
 import Blurs from 'view/Blurs';
 import WordInput from 'view/WordInput';
@@ -20,28 +20,7 @@ type DeleteAreaStatus = 'none' | 'show' | 'active';
 
 const StageContainer = styled.div`
   position: relative;
-  width: 100%;
-  height: 100%;
   background: #000;
-  &::before,
-  &::after {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: block;
-    width: 100%;
-    height: 180px;
-    content: '';
-    background: linear-gradient(180deg, rgba(34, 34, 34, 0.94) 0%, rgba(71, 71, 71, 0) 100%);
-    z-index: -1;
-    mix-blend-mode: darken;
-  }
-  &::after {
-    top: unset;
-    bottom: 0;
-    height: 180px;
-    background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);
-  }
 `;
 
 const DeleteArea = styled.div<{ deleteAreaStatus: DeleteAreaStatus }>`
@@ -67,6 +46,7 @@ const DeleteArea = styled.div<{ deleteAreaStatus: DeleteAreaStatus }>`
   line-height: 20px;
   opacity: var(--optaicy);
   transition: all 0.1s ease;
+  box-sizing: border-box;
   svg {
     width: 24px;
     height: 24px;
@@ -93,6 +73,9 @@ const EditorStage: ComponentType<EditorProps> = () => {
   const currentLine = useRef<Konva.Line | null>(null);
 
   const trRef = useRef<Konva.Transformer>(null);
+
+  const lastDist = useRef(0);
+  const lastTextScale = useRef(1);
 
   const deleteAreaRef = useRef<Konva.Group | null>(null);
 
@@ -147,7 +130,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
       const newPoints = lastLine.points().concat([pos.x, pos.y]);
       lastLine.points(newPoints);
     }
-    if (activeTool === 'Blur') {
+    if (activeTool === 'Blur' && currentBlurPos.length) {
       setBlurPos((preBlurPos) => [...preBlurPos, pos]);
     }
   };
@@ -181,8 +164,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
     if (text) {
       const fontSize = textConfig.fontSize! / basicScaleRatio;
       const maxWidth = textConfig!.width / basicScaleRatio;
-      const textWidth = text.length * fontSize > maxWidth ? maxWidth : text.length * fontSize;
-
+      const textWidth = Math.min(maxWidth, text.length * fontSize);
       setTexts((preTexts) => [
         ...preTexts,
         {
@@ -204,15 +186,13 @@ const EditorStage: ComponentType<EditorProps> = () => {
 
   const handleTextDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
     const currentText = e.target;
-    const position = currentText.position()!;
+    const position = currentText.absolutePosition()!;
     const textHeight = currentText.height();
     const deleteAreaTop = deleteAreaRef.current?.y()!;
     if (position.y >= deleteAreaTop - textHeight) {
       setDeleteAreaStatus('active');
-    } else if (position.y >= group.height) {
-      setDeleteAreaStatus('show');
     } else {
-      setDeleteAreaStatus('none');
+      setDeleteAreaStatus('show');
     }
   };
 
@@ -236,24 +216,28 @@ const EditorStage: ComponentType<EditorProps> = () => {
         });
         break;
     }
-    if (deleteAreaStatus !== 'none') {
-      currentText?.moveTo(clipGroup.current);
+    setDeleteAreaStatus('none');
+    currentText?.moveTo(clipGroup.current);
+    if (deleteAreaStatus === 'active') {
       trRef.current?.nodes([]);
-      setDeleteAreaStatus('none');
     }
   };
 
   // TODO: ts
   const handleCut = (clipInfo: any, rotation: number) => {
     setImage(clipInfo, rotation);
-    setTimeout(() => {
-      handleSelectTool(null);
-    }, 50);
+    handleSelectTool(null);
   };
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
       handleDrawStart();
+    } else if (e.target.className === 'Text') {
+      e.target.moveTo(scaleGroup.current!);
+      trRef.current?.nodes([e.target]);
+    } else if (e.target === currentImage.current) {
+      trRef.current?.nodes()[0]?.moveTo(clipGroup.current);
+      trRef.current?.nodes([]);
     }
   };
 
@@ -263,8 +247,6 @@ const EditorStage: ComponentType<EditorProps> = () => {
     } else if (e.target.className === 'Text') {
       e.target.moveTo(scaleGroup.current!);
       trRef.current?.nodes([e.target]);
-    } else if (e.target === currentImage.current) {
-      trRef.current?.nodes([]);
     }
   };
 
@@ -279,6 +261,36 @@ const EditorStage: ComponentType<EditorProps> = () => {
     e.evt.preventDefault();
     if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
       handleDraw();
+    } else if (e.evt.touches.length > 1) {
+      const touchTarget = trRef.current!.nodes()[0] as Konva.Text;
+      touchTarget.draggable(false);
+      const touch1 = e.evt.touches[0];
+      const touch2 = e.evt.touches[1];
+      if (stage.current?.isDragging()) {
+        stage.current?.stopDrag();
+      }
+
+      const p1 = {
+        x: touch1.clientX,
+        y: touch1.clientY,
+      };
+
+      const p2 = {
+        x: touch2.clientX,
+        y: touch2.clientY,
+      };
+
+      const dist = getDistance(p1, p2);
+
+      if (!lastDist.current) {
+        lastDist.current = dist;
+        lastTextScale.current = touchTarget.scaleX();
+      }
+
+      let rotaio = (dist / lastDist.current - 1) * 0.8 + 1;
+      const scale = lastTextScale.current * rotaio;
+      touchTarget.scaleX(scale);
+      touchTarget.scaleY(scale);
     }
   };
 
@@ -287,10 +299,24 @@ const EditorStage: ComponentType<EditorProps> = () => {
       handleDrawEnd();
     }
   };
+
   const handleTouchEnd = (e: Konva.KonvaEventObject<TouchEvent>) => {
     if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
       handleDrawEnd();
     }
+
+    const touchTarget = trRef.current!.nodes()[0] as Konva.Text;
+    if (touchTarget && touchTarget.scaleX() > lastTextScale.current) {
+      const index = touchTarget.attrs.id.slice(-1);
+      setTexts((preTexts) => {
+        preTexts[index].scaleX = touchTarget.scaleX();
+        preTexts[index].scaleY = touchTarget.scaleY();
+        return [...preTexts];
+      });
+    }
+    touchTarget?.draggable(true);
+    lastDist.current = 0;
+    lastTextScale.current = 1;
   };
 
   useEffect(() => {
@@ -298,7 +324,12 @@ const EditorStage: ComponentType<EditorProps> = () => {
   }, []);
 
   return (
-    <StageContainer>
+    <StageContainer
+      style={{
+        width,
+        height,
+      }}
+    >
       <Stage
         ref={stage}
         width={width}
@@ -335,9 +366,9 @@ const EditorStage: ComponentType<EditorProps> = () => {
               <Blurs currentBlur={currentBlurPos} />
               {texts.map((text, index) => (
                 <Text
+                  {...text}
                   key={index}
                   id={`text-${index}`}
-                  {...text}
                   x={text.x}
                   y={text.y}
                   draggable={true}
@@ -349,31 +380,28 @@ const EditorStage: ComponentType<EditorProps> = () => {
                 <Line key={index} {...line} />
               ))}
             </Group>
-            <Html
-              groupProps={{
-                id: 'delete-area',
-                y: height - 120,
-                x: width / 2 - 75,
-                width: 150,
-                height: 80,
-                // offsetX: groupX,
-                // offsetY: groupY,
-              }}
-            >
-              <DeleteArea deleteAreaStatus={deleteAreaStatus}>
-                <IconDelete></IconDelete>
-                <div>Drag here to delete</div>
-              </DeleteArea>
-            </Html>
           </Group>
-
+          <Html
+            groupProps={{
+              id: 'delete-area',
+              y: height - 120,
+              x: width / 2 - 75,
+              width: 150,
+              height: 80,
+            }}
+          >
+            <DeleteArea deleteAreaStatus={deleteAreaStatus}>
+              <IconDelete></IconDelete>
+              <div>Drag here to delete</div>
+            </DeleteArea>
+          </Html>
           <Transformer
             ref={trRef}
             rotateEnabled={false}
+            resizeEnabled={false}
             anchorStroke='rgba(0,0,0,0)'
             anchorFill='rgba(0,0,0,0)'
             borderStroke='#ccc'
-            keepRatio={true}
           />
         </Layer>
       </Stage>
