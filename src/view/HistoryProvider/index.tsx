@@ -10,10 +10,7 @@ type HistoryProviderProps = {
   image: string;
 };
 
-type HistoryState = Pick<
-  HistoryContextType,
-  'blurs' | 'image' | 'lines' | 'texts' | 'group' | 'clipRect'
->;
+type HistoryState = Pick<HistoryContextType, 'blurs' | 'lines' | 'texts' | 'group' | 'clipRect'>;
 
 type UpdateCallback<T> = (param: T) => T;
 
@@ -23,7 +20,6 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
   const { width, height } = useEditor();
 
   const [state, setState] = useState<HistoryState>({
-    image: null,
     group: {
       width: 0,
       height: 0,
@@ -42,6 +38,8 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
     blurs: [],
   });
 
+  const [isInt, setIsInt] = useState(false);
+
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -56,14 +54,21 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
   const history = useRef<History>();
 
   const handleLineChange: UpdateFunction<HistoryContextType['lines']> = (callback) => {
-    history.current?.push({
+    history.current?.pushSync({
       ...stateRef.current,
       lines: callback(stateRef.current.lines),
     });
   };
 
+  const handleBlurChange: UpdateFunction<HistoryContextType['blurs']> = (callback) => {
+    history.current?.pushSync({
+      ...stateRef.current,
+      blurs: callback(stateRef.current.blurs),
+    });
+  };
+
   const handleTextChange: UpdateFunction<HistoryContextType['texts']> = (callback) => {
-    history.current?.push({
+    history.current?.pushSync({
       ...stateRef.current,
       texts: callback(stateRef.current.texts),
     });
@@ -73,7 +78,7 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
     clipRect: Partial<HistoryContextType['clipRect']>,
     rotation: number
   ) => {
-    history.current?.push({
+    history.current?.pushSync({
       ...stateRef.current,
       clipRect: Object.assign({}, stateRef.current.clipRect, clipRect),
       group: Object.assign({}, stateRef.current.group, { rotation }),
@@ -81,18 +86,22 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
   };
 
   const handleGroupChange = (groupConfig: HistoryContextType['group']) => {
-    history.current?.push({
+    history.current?.pushSync({
       ...stateRef.current,
       group: Object.assign({}, stateRef.current.group, groupConfig),
     });
   };
 
   const handleRedo = () => {
-    history.current?.redo().get();
+    if (history.current?.hasRedo) {
+      history.current?.redo().get();
+    }
   };
 
   const handleUndo = () => {
-    history.current?.undo().get();
+    if (history.current?.hasUndo) {
+      history.current?.undo().get();
+    }
   };
 
   useLayoutEffect(() => {
@@ -122,7 +131,6 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
             y: 0,
           },
         },
-        useChunks: false,
         delay: 0,
         onChange: handleDataChange,
       });
@@ -130,7 +138,6 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
       setState((preVal) => {
         return {
           ...preVal,
-          image: mainImage,
           group: {
             width: imageWidth,
             height: imageHeight,
@@ -147,6 +154,8 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
         };
       });
 
+      setIsInt(true);
+
       console.log(history.current);
     }
   }, [imageStatus]);
@@ -155,15 +164,17 @@ const HistoryProvider: ComponentType<HistoryProviderProps> = ({ children, image:
     <HistroyContext.Provider
       value={{
         ...state,
+        image: mainImage,
         setGroup: handleGroupChange,
         setLines: handleLineChange,
+        setBlurs: handleBlurChange,
         setTexts: handleTextChange,
         setImage: handleImagechange,
         redo: handleRedo,
         undo: handleUndo,
       }}
     >
-      {children}
+      {isInt && children}
     </HistroyContext.Provider>
   );
 };

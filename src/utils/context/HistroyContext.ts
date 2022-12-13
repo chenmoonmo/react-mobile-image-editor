@@ -17,13 +17,16 @@ export type HistoryContextType = {
 
   texts: Konva.TextConfig[];
   lines: Konva.LineConfig[];
-  blurs: Konva.ImageConfig[];
+  blurs: {x:number,y:number}[][];
 
   setLines: (
     callback: (lines: HistoryContextType['lines']) => HistoryContextType['lines']
   ) => unknown;
   setTexts: (
     callback: (texts: HistoryContextType['texts']) => HistoryContextType['texts']
+  ) => unknown;
+  setBlurs:  (
+    callback: (texts: HistoryContextType['blurs']) => HistoryContextType['blurs']
   ) => unknown;
   setImage: (clipRectInfo: Partial<HistoryContextType['clipRect']>, rotation: number) => unknown;
   setGroup: (groupConfig: HistoryContextType['group']) => unknown;
@@ -53,6 +56,7 @@ const EditorContext = React.createContext<HistoryContextType>({
   setTexts: () => {},
   setImage: () => {},
   setGroup: () => {},
+  setBlurs: () => {},
   redo: () => {},
   undo: () => {},
 });

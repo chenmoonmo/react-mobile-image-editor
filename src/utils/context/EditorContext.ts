@@ -6,13 +6,14 @@ export type EditorContextType = {
   height: number;
 
   activeTool: null | ToolUnion;
-  handleSelectTool: (tool: ToolUnion | null) => void;
-
-  pencilConfig: PencilConfig;
-  changeColor: (color: string) => void;
 
   editorColors?: string[];
+  pencilConfig: PencilConfig;
+  blurConfig: PencilConfig;
   textConfig: TextConfig;
+
+  handleSelectTool: (tool: ToolUnion | null) => void;
+  changeColor: (color: string) => void;
 };
 
 const EditorContext = React.createContext<EditorContextType>({
@@ -24,10 +25,16 @@ const EditorContext = React.createContext<EditorContextType>({
     lineCap: 'round',
     lineJoin: 'round',
   },
+  blurConfig: {
+    stroke: '#fff',
+    strokeWidth: 40,
+    lineCap: 'round',
+    lineJoin: 'round',
+  },
   textConfig: {
     fill: '#df4b26',
     fontSize: 30,
-    width: 300
+    width: 300,
   },
   editorColors: [
     '#FF2A1A',

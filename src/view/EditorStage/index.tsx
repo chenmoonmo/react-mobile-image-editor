@@ -1,19 +1,22 @@
-import { Layer, Stage, Line, Image, Text, Group, Rect } from 'react-konva';
+import { Layer, Stage, Line, Image, Text, Group, Transformer } from 'react-konva';
 
-import React, { ComponentType, useMemo, useRef } from 'react';
+import React, { ComponentType, useEffect, useMemo, useRef, useState } from 'react';
 import Konva from 'konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import styled from '@emotion/styled';
 import Toolbar from 'view/Toolbar';
-import { getImageSize, getPosition, rotatePoint } from 'utils/utils';
+import { getImageSize, rotatePoint } from 'utils/utils';
 import ClipStage from 'view/ClipStage';
-import { Box } from 'konva/lib/shapes/Transformer';
-import { flushSync } from 'react-dom';
+import Blurs from 'view/Blurs';
+import WordInput from 'view/WordInput';
+import IconDelete from 'assets/icons/icon-delete.svg';
+import { css } from '@emotion/react';
+import { Html } from 'react-konva-utils';
 
-type EditorProps = {
-  image: string;
-};
+type EditorProps = {};
+
+type DeleteAreaStatus = 'none' | 'show' | 'active';
 
 const StageContainer = styled.div`
   position: relative;
@@ -41,22 +44,63 @@ const StageContainer = styled.div`
   }
 `;
 
+const DeleteArea = styled.div<{ deleteAreaStatus: DeleteAreaStatus }>`
+  ${(props) => css`
+    --optaicy: ${props.deleteAreaStatus === 'active' ? 0.9 : 1};
+    --fill-color: ${props.deleteAreaStatus === 'active' ? '#ff6650' : '#0096ff'};
+    --is-show: ${props.deleteAreaStatus === 'none' ? 'none' : 'flex'};
+  `}
+  display: var(--is-show);
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 150px;
+  height: 80px;
+  padding: 14px 0 15px;
+  background: #e2f0fe;
+  box-shadow: 0px 0px 15px 0px rgba(0, 150, 255, 0.6);
+  border-radius: 10px;
+  border: 1px solid var(--fill-color);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fill-color);
+  line-height: 20px;
+  opacity: var(--optaicy);
+  transition: all 0.1s ease;
+  svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--fill-color);
+    transition: inherit;
+  }
+`;
+
 const EditorStage: ComponentType<EditorProps> = () => {
   const { width, height, activeTool, pencilConfig, textConfig, handleSelectTool } = useEditor();
-  const { image, texts, lines, group, clipRect, setLines, setTexts, setImage } = useHistory();
+  const { image, texts, lines, group, clipRect, setLines, setTexts, setImage, setBlurs } =
+    useHistory();
+
+  const [currentBlurPos, setBlurPos] = useState<{ x: number; y: number }[]>([]);
+
+  const [deleteAreaStatus, setDeleteAreaStatus] = useState<DeleteAreaStatus>('none');
 
   const stage = useRef<Konva.Stage>(null);
   const layer = useRef<Konva.Layer>(null);
 
   const scaleGroup = useRef<Konva.Group>(null);
+  const clipGroup = useRef<Konva.Group>(null);
   const currentImage = useRef<Konva.Image | null>(null);
   const currentLine = useRef<Konva.Line | null>(null);
 
+  const trRef = useRef<Konva.Transformer>(null);
+
+  const deleteAreaRef = useRef<Konva.Group | null>(null);
+
   const basicScaleRatio = useMemo(() => {
     const rotationStage = ((group.rotation / 90) % 4) + 1;
-    let containerSize = [width, height] as const;
+    let containerSize = [width, height * 0.8] as const;
     if (rotationStage % 2 === 0) {
-      containerSize = [height, width];
+      containerSize = [height * 0.8, width];
     }
     const [clipContainWidth] = getImageSize(clipRect.width, clipRect.height, ...containerSize);
     return clipContainWidth / clipRect.width;
@@ -64,7 +108,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
 
   const [dx, dy] = useMemo(() => {
     const centerX = width / 2;
-    const centerY = height / 2;
+    const centerY = (height * 0.8) / 2;
 
     const clipCenterX = group.x + (clipRect.x + clipRect.width / 2) * basicScaleRatio;
 
@@ -84,58 +128,121 @@ const EditorStage: ComponentType<EditorProps> = () => {
   const handleDrawStart = () => {
     const drawTarget = scaleGroup.current!;
     const pos = drawTarget.getRelativePointerPosition()!;
-    currentLine.current = new Konva.Line({
-      ...pencilConfig,
-      strokeWidth: pencilConfig.strokeWidth! / basicScaleRatio,
-      points: pos ? [pos.x, pos.y, pos.x, pos.y] : [],
-    });
-    drawTarget.add(currentLine.current);
+    if (activeTool === 'Pencil') {
+      currentLine.current = new Konva.Line({
+        ...pencilConfig,
+        strokeWidth: pencilConfig.strokeWidth! / basicScaleRatio,
+        points: pos ? [pos.x, pos.y, pos.x, pos.y] : [],
+      });
+      drawTarget.add(currentLine.current);
+    } else if (activeTool === 'Blur') {
+      setBlurPos((preBlurPos) => [...preBlurPos, pos]);
+    }
   };
 
   const handleDraw = () => {
     const lastLine = currentLine.current;
-    if (lastLine === null) {
-      return;
-    }
     const pos = scaleGroup.current?.getRelativePointerPosition()!;
-    const newPoints = lastLine.points().concat([pos.x, pos.y]);
-    lastLine.points(newPoints);
+    if (activeTool === 'Pencil' && lastLine) {
+      const newPoints = lastLine.points().concat([pos.x, pos.y]);
+      lastLine.points(newPoints);
+    }
+    if (activeTool === 'Blur') {
+      setBlurPos((preBlurPos) => [...preBlurPos, pos]);
+    }
   };
 
   const handleDrawEnd = () => {
-    setLines((preLines) => {
-      return [
-        ...preLines,
-        {
-          ...pencilConfig,
-          strokeWidth: pencilConfig.strokeWidth! / basicScaleRatio,
-          points: currentLine.current?.points(),
-        },
-      ];
-    });
-    setTimeout(() => {
-      currentLine.current?.destroy();
-      currentLine.current = null;
-    }, 50);
+    const lastLine = currentLine.current;
+    if (activeTool === 'Pencil' && lastLine) {
+      setLines((preLines) => {
+        return [
+          ...preLines,
+          {
+            ...pencilConfig,
+            strokeWidth: pencilConfig.strokeWidth! / basicScaleRatio,
+            points: lastLine.points(),
+          },
+        ];
+      });
+      setTimeout(() => {
+        lastLine.destroy();
+        currentLine.current = null;
+      }, 50);
+    }
+
+    if (activeTool === 'Blur') {
+      setBlurs((preBlurs) => [...preBlurs, currentBlurPos]);
+      setBlurPos([]);
+    }
   };
 
   const handleTextAdd = (text: string) => {
-    const fontSize = textConfig.fontSize! / basicScaleRatio;
-    const maxWidth = textConfig!.width / basicScaleRatio;
-    const textWidth = text.length * fontSize > maxWidth ? maxWidth : text.length * fontSize;
-    setTexts((preTexts) => [
-      ...preTexts,
-      {
-        ...textConfig,
-        fontSize,
-        text,
-        align: 'center',
-        width: textWidth,
-        x: clipRect.x + clipRect.width / 2 - textWidth / 2,
-        y: clipRect.y + clipRect.height / 2,
-      },
-    ]);
+    if (text) {
+      const fontSize = textConfig.fontSize! / basicScaleRatio;
+      const maxWidth = textConfig!.width / basicScaleRatio;
+      const textWidth = text.length * fontSize > maxWidth ? maxWidth : text.length * fontSize;
+
+      setTexts((preTexts) => [
+        ...preTexts,
+        {
+          ...textConfig,
+          fontSize,
+          text,
+          align: 'center',
+          width: textWidth,
+          x: group.width / 2,
+          y: group.height / 2,
+          offsetX: textWidth / 2,
+          offsetY: fontSize / 2,
+          rotation: -group.rotation,
+        },
+      ]);
+      handleSelectTool(null);
+    }
   };
+
+  const handleTextDragMove = (e: Konva.KonvaEventObject<DragEvent>) => {
+    const currentText = e.target;
+    const position = currentText.position()!;
+    const textHeight = currentText.height();
+    const deleteAreaTop = deleteAreaRef.current?.y()!;
+    if (position.y >= deleteAreaTop - textHeight) {
+      setDeleteAreaStatus('active');
+    } else if (position.y >= group.height) {
+      setDeleteAreaStatus('show');
+    } else {
+      setDeleteAreaStatus('none');
+    }
+  };
+
+  const handleTextDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
+    const currentText = e.target;
+    const index = currentText.attrs.id.slice(-1);
+    switch (deleteAreaStatus) {
+      case 'show':
+      case 'none':
+        const position = currentText.position()!;
+        setTexts((preTexts) => {
+          preTexts[index].x = position.x;
+          preTexts[index].y = position.y;
+          return preTexts;
+        });
+        break;
+      case 'active':
+        setTexts((preTexts) => {
+          preTexts.splice(index, 1);
+          return [...preTexts];
+        });
+        break;
+    }
+    if (deleteAreaStatus !== 'none') {
+      currentText?.moveTo(clipGroup.current);
+      trRef.current?.nodes([]);
+      setDeleteAreaStatus('none');
+    }
+  };
+
   // TODO: ts
   const handleCut = (clipInfo: any, rotation: number) => {
     setImage(clipInfo, rotation);
@@ -145,58 +252,50 @@ const EditorStage: ComponentType<EditorProps> = () => {
   };
 
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    switch (activeTool) {
-      case 'Pencil':
-        handleDrawStart();
-        break;
+    if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
+      handleDrawStart();
     }
   };
 
   const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    switch (activeTool) {
-      case 'Pencil':
-        handleDrawStart();
-        break;
+    if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
+      handleDrawStart();
+    } else if (e.target.className === 'Text') {
+      e.target.moveTo(scaleGroup.current!);
+      trRef.current?.nodes([e.target]);
+    } else if (e.target === currentImage.current) {
+      trRef.current?.nodes([]);
     }
   };
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     e.evt.preventDefault();
-    switch (activeTool) {
-      case 'Pencil':
-        handleDraw();
-        break;
+    if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
+      handleDraw();
     }
   };
 
   const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
-    switch (activeTool) {
-      case 'Pencil':
-        handleDraw();
-        break;
-      case 'Cut':
-        // handleScale(e);
-        break;
+    if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
+      handleDraw();
     }
   };
 
   const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    switch (activeTool) {
-      case 'Pencil':
-        handleDrawEnd();
-        break;
+    if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
+      handleDrawEnd();
     }
   };
   const handleTouchEnd = (e: Konva.KonvaEventObject<TouchEvent>) => {
-    switch (activeTool) {
-      case 'Pencil':
-        handleDrawEnd();
-        break;
-      case 'Cut':
-        break;
+    if ((['Blur', 'Pencil'] as any).includes(activeTool)) {
+      handleDrawEnd();
     }
   };
+
+  useEffect(() => {
+    deleteAreaRef.current = stage.current?.findOne('#delete-area') as Konva.Group;
+  }, []);
 
   return (
     <StageContainer>
@@ -212,10 +311,8 @@ const EditorStage: ComponentType<EditorProps> = () => {
         onTouchEnd={handleTouchEnd}
       >
         <Layer ref={layer}>
-          {/* <Rect width={width} height={height} x={0} y={0} fill='red' /> */}
           {/* scale group */}
           <Group
-            id='scale'
             ref={scaleGroup}
             x={groupX}
             y={groupY}
@@ -226,23 +323,65 @@ const EditorStage: ComponentType<EditorProps> = () => {
               y: basicScaleRatio,
             }}
             rotation={group.rotation}
-            clipX={clipRect.x}
-            clipY={clipRect.y}
-            clipHeight={clipRect.height}
-            clipWidth={clipRect.width}
           >
-            <Image ref={currentImage} image={image} width={group.width} height={group.height} />
-            {texts.map((text, index) => (
-              <Text key={index} draggable {...text} />
-            ))}
-            {lines.map((line, index) => (
-              <Line key={index} {...line} />
-            ))}
+            <Group
+              ref={clipGroup}
+              clipX={clipRect.x}
+              clipY={clipRect.y}
+              clipHeight={clipRect.height}
+              clipWidth={clipRect.width}
+            >
+              <Image ref={currentImage} image={image} width={group.width} height={group.height} />
+              <Blurs currentBlur={currentBlurPos} />
+              {texts.map((text, index) => (
+                <Text
+                  key={index}
+                  id={`text-${index}`}
+                  {...text}
+                  x={text.x}
+                  y={text.y}
+                  draggable={true}
+                  onDragMove={handleTextDragMove}
+                  onDragEnd={handleTextDragEnd}
+                />
+              ))}
+              {lines.map((line, index) => (
+                <Line key={index} {...line} />
+              ))}
+            </Group>
+            <Html
+              groupProps={{
+                id: 'delete-area',
+                y: height - 120,
+                x: width / 2 - 75,
+                width: 150,
+                height: 80,
+                // offsetX: groupX,
+                // offsetY: groupY,
+              }}
+            >
+              <DeleteArea deleteAreaStatus={deleteAreaStatus}>
+                <IconDelete></IconDelete>
+                <div>Drag here to delete</div>
+              </DeleteArea>
+            </Html>
           </Group>
+
+          <Transformer
+            ref={trRef}
+            rotateEnabled={false}
+            anchorStroke='rgba(0,0,0,0)'
+            anchorFill='rgba(0,0,0,0)'
+            borderStroke='#ccc'
+            keepRatio={true}
+          />
         </Layer>
       </Stage>
       {activeTool === 'Cut' && <ClipStage onCutDone={handleCut} />}
-      <Toolbar onAddText={handleTextAdd} />
+      {activeTool === 'Words' && (
+        <WordInput onDone={handleTextAdd} onCancel={() => handleSelectTool(null)} />
+      )}
+      {deleteAreaStatus === 'none' && <Toolbar />}
     </StageContainer>
   );
 };

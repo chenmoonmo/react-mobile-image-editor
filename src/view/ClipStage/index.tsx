@@ -5,8 +5,9 @@ import { Group, Rect, Stage, Layer, Image, Text, Line, Transformer } from 'react
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import IconRotate from 'assets/icons/icon-rotate.svg';
-import { getCenter, getDistance, getImageSize, Point, rotatePoint } from 'utils/utils';
+import { getCenter, getDistance, getImageSize, getRotateDistance, Point, rotatePoint } from 'utils/utils';
 import { useAnchor } from 'utils/hooks/useAnchor';
+import Blurs from 'view/Blurs';
 
 type ClipStageProps = {
   onCutDone: (size: any, rotation: number) => unknown;
@@ -16,7 +17,7 @@ const ClipContainer = styled.div`
   position: absolute;
   top: 0;
   left: 0;
-  background: #ccc;
+  background: #000;
 `;
 
 const InputActions = styled.div`
@@ -67,12 +68,11 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   const [clipInfo, setClipInfo] = useState(clipRect);
   const [rotation, setRotaion] = useState(group.rotation);
-
   const basicScaleRatio = useMemo(() => {
     const rotationStage = ((rotation / 90) % 4) + 1;
-    let containerSize = [width, height] as const;
+    let containerSize = [width, height * 0.8] as const;
     if (rotationStage % 2 === 0) {
-      containerSize = [height, width];
+      containerSize = [height * 0.8, width];
     }
     const [clipContainWidth] = getImageSize(clipInfo.width, clipInfo.height, ...containerSize);
     return clipContainWidth / clipInfo.width;
@@ -80,7 +80,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   const [dx, dy] = useMemo(() => {
     const centerX = width / 2;
-    const centerY = height / 2;
+    const centerY = (height * 0.8) / 2;
 
     const clipCenterX = group.x + (clipInfo.x + clipInfo.width / 2) * basicScaleRatio;
 
@@ -96,6 +96,33 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   const groupX = group.x - dx;
   const groupY = group.y - dy;
+
+  const clipRectFill = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = clipInfo.width * basicScaleRatio;
+    canvas.height = clipInfo.height * basicScaleRatio;
+    const ctx = canvas.getContext('2d')!;
+    ctx.strokeStyle = '#0096FF';
+    ctx.lineWidth = 1;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.lineTo(0, canvas.height / 3);
+    ctx.lineTo(width, canvas.height / 3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.lineTo(0, (canvas.height / 3) * 2);
+    ctx.lineTo(width, (canvas.height / 3) * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.lineTo(canvas.width / 3, 0);
+    ctx.lineTo(canvas.width / 3, height);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.lineTo((canvas.width / 3) * 2, 0);
+    ctx.lineTo((canvas.width / 3) * 2, height);
+    ctx.stroke();
+    return canvas as unknown as HTMLImageElement;
+  }, [clipInfo.width, clipInfo.height]);
 
   const handleTransformEnd = () => {
     const node = reRef.current!;
@@ -149,7 +176,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
     setRotaion((preRotation) => preRotation + 90);
   };
 
-  // TODO: 缩放和图片裁剪位置关系
   const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
     e.evt.preventDefault();
     const touchTarget = scaleGroup.current!;
@@ -194,8 +220,10 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
       touchTarget.scaleX(scale);
       touchTarget.scaleY(scale);
 
-      const dx = newCenter.x - lastCenter.current.x;
-      const dy = newCenter.y - lastCenter.current.y;
+      let dx = newCenter.x - lastCenter.current.x;
+      let dy = newCenter.y - lastCenter.current.y;
+
+      [dx, dy] = getRotateDistance(dx, dy, rotation);
 
       const newPos = {
         x: newCenter.x - pointTo.x * scale + dx,
@@ -221,8 +249,10 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
         return (lastCenter.current = p1);
       }
 
-      const dx = p1.x - lastCenter.current.x;
-      const dy = p1.y - lastCenter.current.y;
+      let dx = p1.x - lastCenter.current.x;
+      let dy = p1.y - lastCenter.current.y;
+
+      [dx, dy] = getRotateDistance(dx, dy, rotation);
 
       touchTarget.move({
         x: dx,
@@ -311,7 +341,6 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
         onTouchEnd={handleTouchEnd}
       >
         <Layer>
-          {/* TODO: 允许平移图片 和 双指缩放 */}
           <Group
             x={groupX}
             y={groupY}
@@ -323,6 +352,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
           >
             <Group ref={scaleGroup}>
               <Image ref={currentImage} image={image} width={group.width} height={group.height} />
+              <Blurs key='clipBlur' />
               {texts.map((text, index) => (
                 <Text key={index} draggable {...text} />
               ))}
@@ -337,8 +367,12 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
               y={clipInfo.y}
               width={clipInfo.width}
               height={clipInfo.height}
-              fill='green'
-              opacity={0.3}
+              fillPatternImage={clipRectFill}
+              fillPriority='pattern'
+              fillPatternScale={{
+                x: 1 / basicScaleRatio,
+                y: 1 / basicScaleRatio,
+              }}
               onTransformEnd={handleTransformEnd}
             />
           </Group>

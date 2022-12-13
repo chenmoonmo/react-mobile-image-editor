@@ -13,9 +13,11 @@ var IconCut = require('assets/icons/icon-cut.svg');
 var IconBlur = require('assets/icons/icon-blur.svg');
 var IconRecall = require('assets/icons/icon-recall.svg');
 var IconRotate = require('assets/icons/icon-rotate.svg');
+var ReactDOM = require('react-dom');
+var IconDelete = require('assets/icons/icon-delete.svg');
+var reactKonvaUtils = require('react-konva-utils');
 var stateshot = require('stateshot');
 var useImage = require('use-image');
-var ReactDOM = require('react-dom');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -28,8 +30,9 @@ var IconCut__default = /*#__PURE__*/_interopDefaultLegacy(IconCut);
 var IconBlur__default = /*#__PURE__*/_interopDefaultLegacy(IconBlur);
 var IconRecall__default = /*#__PURE__*/_interopDefaultLegacy(IconRecall);
 var IconRotate__default = /*#__PURE__*/_interopDefaultLegacy(IconRotate);
-var useImage__default = /*#__PURE__*/_interopDefaultLegacy(useImage);
 var ReactDOM__default = /*#__PURE__*/_interopDefaultLegacy(ReactDOM);
+var IconDelete__default = /*#__PURE__*/_interopDefaultLegacy(IconDelete);
+var useImage__default = /*#__PURE__*/_interopDefaultLegacy(useImage);
 
 /******************************************************************************
 Copyright (c) Microsoft Corporation.
@@ -56,6 +59,35 @@ var __assign = function() {
     };
     return __assign.apply(this, arguments);
 };
+
+function __values(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+}
+
+function __read(o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+}
 
 function __spreadArray(to, from, pack) {
     if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
@@ -1436,10 +1468,16 @@ var EditorContext$1 = React__default["default"].createContext({
         lineCap: 'round',
         lineJoin: 'round',
     },
+    blurConfig: {
+        stroke: '#fff',
+        strokeWidth: 40,
+        lineCap: 'round',
+        lineJoin: 'round',
+    },
     textConfig: {
         fill: '#df4b26',
         fontSize: 30,
-        width: 300
+        width: 300,
     },
     editorColors: [
         '#FF2A1A',
@@ -1457,7 +1495,7 @@ var EditorContext$1 = React__default["default"].createContext({
 });
 
 var EditorProvider = function (_a) {
-    var children = _a.children, _b = _a.editorColors, editorColors = _b === void 0 ? [
+    var _b = _a.width, width = _b === void 0 ? 0 : _b, _c = _a.height, height = _c === void 0 ? 0 : _c, _d = _a.editorColors, editorColors = _d === void 0 ? [
         '#FF2A1A',
         '#000000',
         '#999999',
@@ -1466,20 +1504,25 @@ var EditorProvider = function (_a) {
         '#F9CA5A',
         '#19A049',
         '#24A8D0',
-    ] : _b, _c = _a.width, width = _c === void 0 ? 0 : _c, _d = _a.height, height = _d === void 0 ? 0 : _d;
-    var _e = React.useState({
+    ] : _d, _e = _a.blurConfig, blurConfig = _e === void 0 ? {
+        stroke: '#eaeaeaeb',
+        strokeWidth: 30,
+        lineCap: 'round',
+        lineJoin: 'round',
+    } : _e, children = _a.children;
+    var _f = __read(React.useState({
         stroke: editorColors[0],
         strokeWidth: 5,
         lineCap: 'round',
         lineJoin: 'round',
-    }), pencilConfig = _e[0], setPencilConfig = _e[1];
-    var _f = React.useState({
+    }), 2), pencilConfig = _f[0], setPencilConfig = _f[1];
+    var _g = __read(React.useState({
         fontSize: 30,
         fill: editorColors[0],
         wrap: 'word',
-        width: width * 0.9
-    }), textConfig = _f[0], setTextConfig = _f[1];
-    var _g = React.useState(null), activeTool = _g[0], setActiveTool = _g[1];
+        width: width * 0.9,
+    }), 2), textConfig = _g[0], setTextConfig = _g[1];
+    var _h = __read(React.useState(null), 2), activeTool = _h[0], setActiveTool = _h[1];
     var handleSelectTool = function (currentTool) {
         setActiveTool(function (preTool) {
             return preTool === currentTool ? null : currentTool;
@@ -1495,8 +1538,9 @@ var EditorProvider = function (_a) {
     };
     return (jsxRuntime.exports.jsx(EditorContext$1.Provider, __assign({ value: {
             width: width,
-            height: height - 100,
+            height: height,
             pencilConfig: pencilConfig,
+            blurConfig: blurConfig,
             textConfig: textConfig,
             editorColors: editorColors,
             activeTool: activeTool,
@@ -1532,22 +1576,13 @@ var EditorContext = React__default["default"].createContext({
     setTexts: function () { },
     setImage: function () { },
     setGroup: function () { },
+    setBlurs: function () { },
     redo: function () { },
     undo: function () { },
 });
 
 var useHistory = function () {
     var context = React.useContext(EditorContext);
-    return context;
-};
-
-var WordInputContext = React__default["default"].createContext({
-    isShow: false,
-    startInput: function () { },
-});
-
-var useWordInput = function () {
-    var context = React.useContext(WordInputContext);
     return context;
 };
 
@@ -1558,20 +1593,18 @@ var ToolsMap = [
     { icon: jsxRuntime.exports.jsx(IconBlur__default["default"], {}), name: 'Blur' },
     { icon: jsxRuntime.exports.jsx(IconRecall__default["default"], {}), name: 'Recall' },
 ];
-var ToolContainer = styled__default["default"].div(templateObject_1$3 || (templateObject_1$3 = __makeTemplateObject(["\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  padding-bottom: 60px;\n  background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);\n"], ["\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  padding-bottom: 60px;\n  background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);\n"])));
-var ToolbarContainer = styled__default["default"].div(templateObject_2$2 || (templateObject_2$2 = __makeTemplateObject(["\n  display: flex;\n  justify-content: space-evenly;\n  box-sizing: border-box;\n  width: 100%;\n  padding: 10px 0;\n"], ["\n  display: flex;\n  justify-content: space-evenly;\n  box-sizing: border-box;\n  width: 100%;\n  padding: 10px 0;\n"])));
+var ToolContainer = styled__default["default"].div(templateObject_1$3 || (templateObject_1$3 = __makeTemplateObject(["\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  padding-bottom: 20px;\n  background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);\n"], ["\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  padding-bottom: 20px;\n  background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);\n"])));
+var ToolbarContainer = styled__default["default"].div(templateObject_2$3 || (templateObject_2$3 = __makeTemplateObject(["\n  display: flex;\n  justify-content: space-evenly;\n  box-sizing: border-box;\n  width: 100%;\n  padding: 10px 0;\n"], ["\n  display: flex;\n  justify-content: space-evenly;\n  box-sizing: border-box;\n  width: 100%;\n  padding: 10px 0;\n"])));
 var ToolbarItem = React__default["default"].memo(styled__default["default"].div(templateObject_4$1 || (templateObject_4$1 = __makeTemplateObject(["\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  width: 50px;\n  height: 50px;\n  font-size: 14px;\n  font-weight: 400;\n  color: #fff;\n  line-height: 20px;\n  border: 1px solid transparent;\n  transition: all 0.3s ease-in-out;\n  svg {\n    width: 20px;\n    height: 20px;\n    margin-bottom: 2px;\n    fill: #fff;\n  }\n  ", "\n"], ["\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  width: 50px;\n  height: 50px;\n  font-size: 14px;\n  font-weight: 400;\n  color: #fff;\n  line-height: 20px;\n  border: 1px solid transparent;\n  transition: all 0.3s ease-in-out;\n  svg {\n    width: 20px;\n    height: 20px;\n    margin-bottom: 2px;\n    fill: #fff;\n  }\n  ", "\n"])), function (props) {
-    return props.isActive && react.css(templateObject_3$1 || (templateObject_3$1 = __makeTemplateObject(["\n      color: #0096ff;\n      background: #e6f5ff;\n      box-shadow: 0px 0px 15px 0px rgba(0, 150, 255, 0.6);\n      border-radius: 5px;\n      border: 1px solid #0096ff;\n      svg {\n        fill: #0096ff;\n      }\n    "], ["\n      color: #0096ff;\n      background: #e6f5ff;\n      box-shadow: 0px 0px 15px 0px rgba(0, 150, 255, 0.6);\n      border-radius: 5px;\n      border: 1px solid #0096ff;\n      svg {\n        fill: #0096ff;\n      }\n    "])));
+    return props.isActive && react.css(templateObject_3$2 || (templateObject_3$2 = __makeTemplateObject(["\n      color: #0096ff;\n      background: #e6f5ff;\n      box-shadow: 0px 0px 15px 0px rgba(0, 150, 255, 0.6);\n      border-radius: 5px;\n      border: 1px solid #0096ff;\n      svg {\n        fill: #0096ff;\n      }\n    "], ["\n      color: #0096ff;\n      background: #e6f5ff;\n      box-shadow: 0px 0px 15px 0px rgba(0, 150, 255, 0.6);\n      border-radius: 5px;\n      border: 1px solid #0096ff;\n      svg {\n        fill: #0096ff;\n      }\n    "])));
 }));
 var ColorItem$1 = styled__default["default"].div(templateObject_6$1 || (templateObject_6$1 = __makeTemplateObject(["\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  ", "\n"], ["\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  ", "\n"])), function (props) {
     return react.css(templateObject_5$1 || (templateObject_5$1 = __makeTemplateObject(["\n      background: ", ";\n      box-shadow: ", ";\n      border: ", ";\n    "], ["\n      background: ", ";\n      box-shadow: ", ";\n      border: ", ";\n    "])), props.color, props.color === props.currentColor ? '0px 0px 4px 0px #0096ff' : 'none', props.color === props.currentColor ? '1px solid #0096FF;' : '1px solid #FFFFFF');
 });
-var ColorSelector$1 = styled__default["default"].div(templateObject_7$1 || (templateObject_7$1 = __makeTemplateObject(["\n  position: absolute;\n  bottom: 130px;\n  left: 0;\n  display: flex;\n  align-items: center;\n  justify-content: space-around;\n  width: 100%;\n  padding: 0 30px;\n"], ["\n  position: absolute;\n  bottom: 130px;\n  left: 0;\n  display: flex;\n  align-items: center;\n  justify-content: space-around;\n  width: 100%;\n  padding: 0 30px;\n"])));
-var Toolbar = function (_a) {
-    var onAddText = _a.onAddText;
-    var _b = useEditor(), activeTool = _b.activeTool, pencilConfig = _b.pencilConfig, editorColors = _b.editorColors, handleSelectTool = _b.handleSelectTool, changeColor = _b.changeColor;
+var ColorSelector$1 = styled__default["default"].div(templateObject_7$1 || (templateObject_7$1 = __makeTemplateObject(["\n  display: flex;\n  align-items: center;\n  justify-content: space-around;\n  width: 100%;\n  padding: 0 30px;\n"], ["\n  display: flex;\n  align-items: center;\n  justify-content: space-around;\n  width: 100%;\n  padding: 0 30px;\n"])));
+var Toolbar = function () {
+    var _a = useEditor(), activeTool = _a.activeTool, pencilConfig = _a.pencilConfig, editorColors = _a.editorColors, handleSelectTool = _a.handleSelectTool, changeColor = _a.changeColor;
     var undo = useHistory().undo;
-    var startInput = useWordInput().startInput;
     var isColorSelectorShow = React.useMemo(function () {
         return ['Pencil'].includes(activeTool);
     }, [activeTool]);
@@ -1582,19 +1615,17 @@ var Toolbar = function (_a) {
                 break;
             case 'Words':
                 handleSelectTool('Words');
-                startInput('', onAddText);
                 break;
             case 'Cut':
-                // onCutStart?.();
                 handleSelectTool(tool);
                 break;
             default:
                 handleSelectTool(tool);
         }
     };
-    return (jsxRuntime.exports.jsxs(ToolContainer, { children: [isColorSelectorShow && (jsxRuntime.exports.jsx(ColorSelector$1, { children: editorColors === null || editorColors === void 0 ? void 0 : editorColors.map(function (color) { return (jsxRuntime.exports.jsx(ColorItem$1, { color: color, currentColor: pencilConfig.stroke, onClick: function () { return changeColor(color); } }, color)); }) })), activeTool !== 'Cut' && (jsxRuntime.exports.jsx(ToolbarContainer, { children: ToolsMap.map(function (tool) { return (jsxRuntime.exports.jsxs(ToolbarItem, __assign({ onClick: function () { return handleToolSelect(tool.name); }, isActive: tool.name === activeTool }, { children: [tool.icon, jsxRuntime.exports.jsx("span", { children: tool.name })] }), tool.name)); }) }))] }));
+    return (jsxRuntime.exports.jsxs(ToolContainer, { children: [isColorSelectorShow && (jsxRuntime.exports.jsx(ColorSelector$1, { children: editorColors === null || editorColors === void 0 ? void 0 : editorColors.map(function (color) { return (jsxRuntime.exports.jsx(ColorItem$1, { color: color, currentColor: pencilConfig.stroke, onClick: function () { return changeColor(color); } }, color)); }) })), !['Words', 'Cut'].includes(activeTool) && (jsxRuntime.exports.jsx(ToolbarContainer, { children: ToolsMap.map(function (tool) { return (jsxRuntime.exports.jsxs(ToolbarItem, __assign({ onClick: function () { return handleToolSelect(tool.name); }, isActive: tool.name === activeTool }, { children: [tool.icon, jsxRuntime.exports.jsx("span", { children: tool.name })] }), tool.name)); }) }))] }));
 };
-var templateObject_1$3, templateObject_2$2, templateObject_3$1, templateObject_4$1, templateObject_5$1, templateObject_6$1, templateObject_7$1;
+var templateObject_1$3, templateObject_2$3, templateObject_3$2, templateObject_4$1, templateObject_5$1, templateObject_6$1, templateObject_7$1;
 
 var getImageSize = function (imageWidth, imageHeight, width, height) {
     var imageRatio = imageWidth / imageHeight;
@@ -1603,21 +1634,45 @@ var getImageSize = function (imageWidth, imageHeight, width, height) {
         ? [imageRatio * height, height]
         : [width, (1 / imageRatio) * width];
 };
-function rotatePoint(x, y, r) {
+var rotatePoint = function (x, y, r) {
     var rRadians = r * (Math.PI / 180);
     var xOffset = x * Math.cos(rRadians) - y * Math.sin(rRadians);
     var yOffset = x * Math.sin(rRadians) + y * Math.cos(rRadians);
     return [xOffset, yOffset];
-}
-function getDistance(p1, p2) {
+};
+var getDistance = function (p1, p2) {
     return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-}
-function getCenter(p1, p2) {
+};
+var getCenter = function (p1, p2) {
     return {
         x: (p1.x + p2.x) / 2,
         y: (p1.y + p2.y) / 2,
     };
-}
+};
+var getRotateDistance = function (dx, dy, r) {
+    var rotationStage = ((r / 90) % 4) + 1;
+    switch (rotationStage) {
+        case 1:
+            return [dx, dy];
+        case 2:
+            return [dy, -dx];
+        case 3:
+            return [-dx, -dy];
+        case 4:
+            return [-dy, dx];
+        default:
+            return [dx, dy];
+    }
+};
+// 主要用于在马赛克时，进行图片像素处理
+var generateImageData = function (imgObj, width, height) {
+    var canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(imgObj, 0, 0, width, height);
+    return ctx.getImageData(0, 0, width, height);
+};
 
 var AnchorPositons = [
     'top-left',
@@ -1632,20 +1687,40 @@ var AnchorPositons = [
 var useAnchor = function () {
     var anchorsRef = React.useRef({});
     var drawAnchors = function (transformer) {
-        for (var _i = 0, AnchorPositons_1 = AnchorPositons; _i < AnchorPositons_1.length; _i++) {
-            var positon = AnchorPositons_1[_i];
-            var rect = transformer.findOne(".".concat(positon));
-            rect === null || rect === void 0 ? void 0 : rect.fillPriority('pattern');
-            rect === null || rect === void 0 ? void 0 : rect.fillPatternRepeat('no-repeat');
-            rect === null || rect === void 0 ? void 0 : rect.fillPatternImage(anchorsRef.current[positon]);
-            rect === null || rect === void 0 ? void 0 : rect.strokeEnabled(false);
+        var e_1, _a;
+        try {
+            for (var AnchorPositons_1 = __values(AnchorPositons), AnchorPositons_1_1 = AnchorPositons_1.next(); !AnchorPositons_1_1.done; AnchorPositons_1_1 = AnchorPositons_1.next()) {
+                var positon = AnchorPositons_1_1.value;
+                var rect = transformer.findOne(".".concat(positon));
+                rect === null || rect === void 0 ? void 0 : rect.fillPriority('pattern');
+                rect === null || rect === void 0 ? void 0 : rect.fillPatternRepeat('no-repeat');
+                rect === null || rect === void 0 ? void 0 : rect.fillPatternImage(anchorsRef.current[positon]);
+                rect === null || rect === void 0 ? void 0 : rect.strokeEnabled(false);
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (AnchorPositons_1_1 && !AnchorPositons_1_1.done && (_a = AnchorPositons_1.return)) _a.call(AnchorPositons_1);
+            }
+            finally { if (e_1) throw e_1.error; }
         }
         transformer === null || transformer === void 0 ? void 0 : transformer.getLayer().batchDraw();
     };
     React.useLayoutEffect(function () {
-        for (var _i = 0, AnchorPositons_2 = AnchorPositons; _i < AnchorPositons_2.length; _i++) {
-            var positon = AnchorPositons_2[_i];
-            anchorsRef.current[positon] = anchorShapeCanvasFactory(positon);
+        var e_2, _a;
+        try {
+            for (var AnchorPositons_2 = __values(AnchorPositons), AnchorPositons_2_1 = AnchorPositons_2.next(); !AnchorPositons_2_1.done; AnchorPositons_2_1 = AnchorPositons_2.next()) {
+                var positon = AnchorPositons_2_1.value;
+                anchorsRef.current[positon] = anchorShapeCanvasFactory(positon);
+            }
+        }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        finally {
+            try {
+                if (AnchorPositons_2_1 && !AnchorPositons_2_1.done && (_a = AnchorPositons_2.return)) _a.call(AnchorPositons_2);
+            }
+            finally { if (e_2) throw e_2.error; }
         }
     }, []);
     return drawAnchors;
@@ -1722,8 +1797,120 @@ var anchorShapeCanvasFactory = function (position, color) {
     return canvas;
 };
 
-var ClipContainer = styled__default["default"].div(templateObject_1$2 || (templateObject_1$2 = __makeTemplateObject(["\n  position: absolute;\n  top: 0;\n  left: 0;\n  background: #ccc;\n"], ["\n  position: absolute;\n  top: 0;\n  left: 0;\n  background: #ccc;\n"])));
-var InputActions$1 = styled__default["default"].div(templateObject_2$1 || (templateObject_2$1 = __makeTemplateObject(["\n  position: fixed;\n  bottom: 20px;\n  left: 0;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  width: 100%;\n  padding: 12px 20px;\n  font-size: 16px;\n  font-weight: 400;\n  color: #ffffff;\n  line-height: 16px;\n  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.5);\n  z-index: 1000;\n  div {\n    position: relative;\n    &::after {\n      position: absolute;\n      top: 50%;\n      left: 50%;\n      display: block;\n      width: 200%;\n      height: 200%;\n      content: '';\n      transform: translate(-50%, -50%);\n    }\n  }\n"], ["\n  position: fixed;\n  bottom: 20px;\n  left: 0;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  width: 100%;\n  padding: 12px 20px;\n  font-size: 16px;\n  font-weight: 400;\n  color: #ffffff;\n  line-height: 16px;\n  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.5);\n  z-index: 1000;\n  div {\n    position: relative;\n    &::after {\n      position: absolute;\n      top: 50%;\n      left: 50%;\n      display: block;\n      width: 200%;\n      height: 200%;\n      content: '';\n      transform: translate(-50%, -50%);\n    }\n  }\n"])));
+var tileHeight = 10;
+var tileWidth = 10;
+var Tile = function (_a) {
+    var tile = _a.tile;
+    if (tile.isFilled) {
+        jsxRuntime.exports.jsx(jsxRuntime.exports.Fragment, {});
+    }
+    if (!tile.color) {
+        var dataLen = tile.data.length;
+        var r = 0, g = 0, b = 0, a = 0;
+        for (var i = 0; i < dataLen; i += 4) {
+            r += tile.data[i];
+            g += tile.data[i + 1];
+            b += tile.data[i + 2];
+            a += tile.data[i + 3];
+        }
+        // Set tile color.
+        var pixelLen = dataLen / 4;
+        tile.color = {
+            r: Math.round(r / pixelLen),
+            g: Math.round(g / pixelLen),
+            b: Math.round(b / pixelLen),
+            a: Math.round(a / pixelLen),
+        };
+    }
+    var color = tile.color;
+    var x = tile.column * tileWidth;
+    var y = tile.row * tileHeight;
+    var w = tile.pixelWidth;
+    var h = tile.pixelHeight;
+    return (jsxRuntime.exports.jsx(reactKonva.Rect, { globalCompositeOperation: 'source-over', x: x, y: y, width: w, height: h, fill: "rgba(".concat(color.r, ", ").concat(color.g, ", ").concat(color.b, ", ").concat(color.a / 255, ")") }));
+};
+var Blurs = function (_a) {
+    var _b = _a.currentBlur, currentBlur = _b === void 0 ? [] : _b;
+    var _c = useEditor(), width = _c.width, height = _c.height;
+    var _d = useHistory(), image = _d.image, group = _d.group, blurs = _d.blurs;
+    var tiles = React.useRef([]);
+    var tileRowSize = Math.ceil(height / tileHeight);
+    var tileColumnSize = Math.ceil(width / tileWidth);
+    var _e = __read(React.useState(false), 2), isInt = _e[0], setIsInt = _e[1];
+    var getTilesByPoint = function (x, y, strokeWidth) {
+        var ts = [];
+        var startRow = Math.max(0, Math.floor(y / tileHeight) - Math.floor(strokeWidth / 2));
+        var startColumn = Math.max(0, Math.floor(x / tileWidth) - Math.floor(strokeWidth / 2));
+        var endRow = Math.min(tileRowSize, startRow + strokeWidth);
+        var endColumn = Math.min(tileColumnSize, startColumn + strokeWidth);
+        while (startRow < endRow) {
+            var column = startColumn;
+            while (column < endColumn) {
+                ts.push(tiles.current[startRow * tileColumnSize + column]);
+                column += 1;
+            }
+            startRow += 1;
+        }
+        return ts;
+    };
+    var currentTiles = React.useMemo(function () {
+        var posTotiles = [];
+        if (!isInt)
+            return posTotiles;
+        currentBlur.forEach(function (pos) {
+            posTotiles.push.apply(posTotiles, __spreadArray([], __read(getTilesByPoint(pos.x, pos.y, 5)), false));
+        });
+        return posTotiles;
+    }, [currentBlur, isInt]);
+    var bluredTiles = React.useMemo(function () {
+        var posTotiles = [];
+        if (!isInt)
+            return posTotiles;
+        blurs.forEach(function (currentBlur) {
+            currentBlur.forEach(function (pos) {
+                posTotiles.push.apply(posTotiles, __spreadArray([], __read(getTilesByPoint(pos.x, pos.y, 5)), false));
+            });
+        });
+        return posTotiles;
+    }, [blurs, isInt]);
+    React.useEffect(function () {
+        var imageData = generateImageData(image, group.width, group.height);
+        for (var i = 0; i < tileRowSize; i++) {
+            for (var j = 0; j < tileColumnSize; j++) {
+                var tile = {
+                    row: i,
+                    column: j,
+                    pixelWidth: tileWidth,
+                    pixelHeight: tileHeight,
+                    data: [],
+                };
+                var data = [];
+                // 转换为像素图形下，起始像素位置
+                var pixelPosition = (width * tileHeight * tile.row + tile.column * tileWidth) * 4;
+                // 转换为像素图形下，包含多少行
+                var pixelRowAmount = tile.pixelHeight;
+                // 计算，转换为像素图形使，一个贴片所包含的所有像素数据。先遍历贴片范围内的每一列，每一列中再单独统计行的像素数量
+                for (var i_1 = 0; i_1 < pixelRowAmount; i_1++) {
+                    // 当前列的起始像素位置
+                    var position = pixelPosition + width * 4 * i_1;
+                    // 贴片范围内一行的像素数据，等于贴片宽度 * 4
+                    data = __spreadArray(__spreadArray([], __read(data), false), __read(imageData.data.slice(position, position + tile.pixelWidth * 4)), false);
+                }
+                tile.data = data;
+                tiles.current.push(tile);
+            }
+        }
+        setIsInt(true);
+    }, [image]);
+    return (jsxRuntime.exports.jsxs(jsxRuntime.exports.Fragment, { children: [currentTiles.length > 0 && (jsxRuntime.exports.jsx(reactKonva.Group, { children: currentTiles.map(function (tile, index) {
+                    return tile && jsxRuntime.exports.jsx(Tile, { tile: tile }, "".concat(index, "-").concat(tile.row, "-").concat(tile.column));
+                }) })), bluredTiles.length > 0 && (jsxRuntime.exports.jsx(reactKonva.Group, { children: bluredTiles.map(function (tile, index) {
+                    return tile && jsxRuntime.exports.jsx(Tile, { tile: tile }, "".concat(index, "-").concat(tile.row, "-").concat(tile.column));
+                }) }))] }));
+};
+
+var ClipContainer = styled__default["default"].div(templateObject_1$2 || (templateObject_1$2 = __makeTemplateObject(["\n  position: absolute;\n  top: 0;\n  left: 0;\n  background: #000;\n"], ["\n  position: absolute;\n  top: 0;\n  left: 0;\n  background: #000;\n"])));
+var InputActions$1 = styled__default["default"].div(templateObject_2$2 || (templateObject_2$2 = __makeTemplateObject(["\n  position: fixed;\n  bottom: 20px;\n  left: 0;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  width: 100%;\n  padding: 12px 20px;\n  font-size: 16px;\n  font-weight: 400;\n  color: #ffffff;\n  line-height: 16px;\n  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.5);\n  z-index: 1000;\n  div {\n    position: relative;\n    &::after {\n      position: absolute;\n      top: 50%;\n      left: 50%;\n      display: block;\n      width: 200%;\n      height: 200%;\n      content: '';\n      transform: translate(-50%, -50%);\n    }\n  }\n"], ["\n  position: fixed;\n  bottom: 20px;\n  left: 0;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  width: 100%;\n  padding: 12px 20px;\n  font-size: 16px;\n  font-weight: 400;\n  color: #ffffff;\n  line-height: 16px;\n  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.5);\n  z-index: 1000;\n  div {\n    position: relative;\n    &::after {\n      position: absolute;\n      top: 50%;\n      left: 50%;\n      display: block;\n      width: 200%;\n      height: 200%;\n      content: '';\n      transform: translate(-50%, -50%);\n    }\n  }\n"])));
 var ClipStage = function (_a) {
     var onCutDone = _a.onCutDone;
     var _b = useHistory(), image = _b.image, texts = _b.texts, lines = _b.lines, group = _b.group, clipRect = _b.clipRect;
@@ -1736,29 +1923,55 @@ var ClipStage = function (_a) {
     var trRef = React.useRef(null);
     var lastCenter = React.useRef(null);
     var lastDist = React.useRef(0);
-    var _d = React.useState(clipRect), clipInfo = _d[0], setClipInfo = _d[1];
-    var _e = React.useState(group.rotation), rotation = _e[0], setRotaion = _e[1];
+    var _d = __read(React.useState(clipRect), 2), clipInfo = _d[0], setClipInfo = _d[1];
+    var _e = __read(React.useState(group.rotation), 2), rotation = _e[0], setRotaion = _e[1];
     var basicScaleRatio = React.useMemo(function () {
         var rotationStage = ((rotation / 90) % 4) + 1;
-        var containerSize = [width, height];
+        var containerSize = [width, height * 0.8];
         if (rotationStage % 2 === 0) {
-            containerSize = [height, width];
+            containerSize = [height * 0.8, width];
         }
-        var clipContainWidth = getImageSize.apply(void 0, __spreadArray([clipInfo.width, clipInfo.height], containerSize, false))[0];
+        var _a = __read(getImageSize.apply(void 0, __spreadArray([clipInfo.width, clipInfo.height], __read(containerSize), false)), 1), clipContainWidth = _a[0];
         return clipContainWidth / clipInfo.width;
     }, [clipInfo, rotation]);
-    var _f = React.useMemo(function () {
+    var _f = __read(React.useMemo(function () {
         var centerX = width / 2;
-        var centerY = height / 2;
+        var centerY = (height * 0.8) / 2;
         var clipCenterX = group.x + (clipInfo.x + clipInfo.width / 2) * basicScaleRatio;
         var clipCenterY = group.y + (clipInfo.y + clipInfo.height / 2) * basicScaleRatio;
-        var _a = rotatePoint(clipCenterX, clipCenterY, rotation), rdx = _a[0], rdy = _a[1];
+        var _a = __read(rotatePoint(clipCenterX, clipCenterY, rotation), 2), rdx = _a[0], rdy = _a[1];
         var dx = isNaN(clipCenterX - centerX) ? 0 : rdx - centerX;
         var dy = isNaN(clipCenterY - centerY) ? 0 : rdy - centerY;
         return [dx, dy];
-    }, [group, clipInfo, rotation, basicScaleRatio]), dx = _f[0], dy = _f[1];
+    }, [group, clipInfo, rotation, basicScaleRatio]), 2), dx = _f[0], dy = _f[1];
     var groupX = group.x - dx;
     var groupY = group.y - dy;
+    var clipRectFill = React.useMemo(function () {
+        var canvas = document.createElement('canvas');
+        canvas.width = clipInfo.width * basicScaleRatio;
+        canvas.height = clipInfo.height * basicScaleRatio;
+        var ctx = canvas.getContext('2d');
+        ctx.strokeStyle = '#0096FF';
+        ctx.lineWidth = 1;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.lineTo(0, canvas.height / 3);
+        ctx.lineTo(width, canvas.height / 3);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.lineTo(0, (canvas.height / 3) * 2);
+        ctx.lineTo(width, (canvas.height / 3) * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.lineTo(canvas.width / 3, 0);
+        ctx.lineTo(canvas.width / 3, height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.lineTo((canvas.width / 3) * 2, 0);
+        ctx.lineTo((canvas.width / 3) * 2, height);
+        ctx.stroke();
+        return canvas;
+    }, [clipInfo.width, clipInfo.height]);
     var handleTransformEnd = function () {
         var _a, _b;
         var node = reRef.current;
@@ -1802,16 +2015,16 @@ var ClipStage = function (_a) {
     var hanldeRotate = function () {
         setRotaion(function (preRotation) { return preRotation + 90; });
     };
-    // TODO: 缩放和图片裁剪位置关系
     var handleTouchMove = function (e) {
-        var _a, _b, _c;
+        var _a, _b;
+        var _c, _d, _e;
         e.evt.preventDefault();
         var touchTarget = scaleGroup.current;
         var touch1 = e.evt.touches[0];
         var touch2 = e.evt.touches[1];
         if (touch1 && touch2) {
-            if ((_a = stageRef.current) === null || _a === void 0 ? void 0 : _a.isDragging()) {
-                (_b = stageRef.current) === null || _b === void 0 ? void 0 : _b.stopDrag();
+            if ((_c = stageRef.current) === null || _c === void 0 ? void 0 : _c.isDragging()) {
+                (_d = stageRef.current) === null || _d === void 0 ? void 0 : _d.stopDrag();
             }
             var p1 = {
                 x: touch1.clientX,
@@ -1839,6 +2052,7 @@ var ClipStage = function (_a) {
             touchTarget.scaleY(scale);
             var dx_1 = newCenter.x - lastCenter.current.x;
             var dy_1 = newCenter.y - lastCenter.current.y;
+            _a = __read(getRotateDistance(dx_1, dy_1, rotation), 2), dx_1 = _a[0], dy_1 = _a[1];
             var newPos = {
                 x: newCenter.x - pointTo.x * scale + dx_1,
                 y: newCenter.y - pointTo.y * scale + dy_1,
@@ -1849,7 +2063,7 @@ var ClipStage = function (_a) {
             return;
         }
         if (touch1) {
-            if ((_c = trRef.current) === null || _c === void 0 ? void 0 : _c.isTransforming())
+            if ((_e = trRef.current) === null || _e === void 0 ? void 0 : _e.isTransforming())
                 return;
             var p1 = {
                 x: touch1.clientX,
@@ -1860,6 +2074,7 @@ var ClipStage = function (_a) {
             }
             var dx_2 = p1.x - lastCenter.current.x;
             var dy_2 = p1.y - lastCenter.current.y;
+            _b = __read(getRotateDistance(dx_2, dy_2, rotation), 2), dx_2 = _b[0], dy_2 = _b[1];
             touchTarget.move({
                 x: dx_2,
                 y: dy_2,
@@ -1925,235 +2140,18 @@ var ClipStage = function (_a) {
     return (jsxRuntime.exports.jsxs(ClipContainer, { children: [jsxRuntime.exports.jsx(reactKonva.Stage, __assign({ ref: stageRef, width: width, height: height, scale: {
                     x: 0.96,
                     y: 0.96,
-                }, x: width * 0.02, y: height * 0.02, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd }, { children: jsxRuntime.exports.jsxs(reactKonva.Layer, { children: [jsxRuntime.exports.jsxs(reactKonva.Group, __assign({ x: groupX, y: groupY, width: group.width, height: group.height, scaleX: basicScaleRatio, scaleY: basicScaleRatio, rotation: rotation }, { children: [jsxRuntime.exports.jsxs(reactKonva.Group, __assign({ ref: scaleGroup }, { children: [jsxRuntime.exports.jsx(reactKonva.Image, { ref: currentImage, image: image, width: group.width, height: group.height }), texts.map(function (text, index) { return (jsxRuntime.exports.jsx(reactKonva.Text, __assign({ draggable: true }, text), index)); }), lines.map(function (line, index) { return (jsxRuntime.exports.jsx(reactKonva.Line, __assign({}, line), index)); })] })), jsxRuntime.exports.jsx(reactKonva.Rect, { ref: reRef, x: clipInfo.x, y: clipInfo.y, width: clipInfo.width, height: clipInfo.height, fill: 'green', opacity: 0.3, onTransformEnd: handleTransformEnd })] })), jsxRuntime.exports.jsx(reactKonva.Transformer, { ref: trRef, rotateEnabled: false, anchorSize: 24 })] }) })), jsxRuntime.exports.jsxs(InputActions$1, { children: [jsxRuntime.exports.jsx("div", __assign({ onClick: hanldeCutCancel }, { children: "Cancel" })), jsxRuntime.exports.jsx(IconRotate__default["default"], { width: 24, height: 24, onClick: hanldeRotate }), jsxRuntime.exports.jsx("div", __assign({ onClick: handleCutDown }, { children: "Done" }))] })] }));
+                }, x: width * 0.02, y: height * 0.02, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd }, { children: jsxRuntime.exports.jsxs(reactKonva.Layer, { children: [jsxRuntime.exports.jsxs(reactKonva.Group, __assign({ x: groupX, y: groupY, width: group.width, height: group.height, scaleX: basicScaleRatio, scaleY: basicScaleRatio, rotation: rotation }, { children: [jsxRuntime.exports.jsxs(reactKonva.Group, __assign({ ref: scaleGroup }, { children: [jsxRuntime.exports.jsx(reactKonva.Image, { ref: currentImage, image: image, width: group.width, height: group.height }), jsxRuntime.exports.jsx(Blurs, {}, 'clipBlur'), texts.map(function (text, index) { return (jsxRuntime.exports.jsx(reactKonva.Text, __assign({ draggable: true }, text), index)); }), lines.map(function (line, index) { return (jsxRuntime.exports.jsx(reactKonva.Line, __assign({}, line), index)); })] })), jsxRuntime.exports.jsx(reactKonva.Rect, { ref: reRef, x: clipInfo.x, y: clipInfo.y, width: clipInfo.width, height: clipInfo.height, fillPatternImage: clipRectFill, fillPriority: 'pattern', fillPatternScale: {
+                                        x: 1 / basicScaleRatio,
+                                        y: 1 / basicScaleRatio,
+                                    }, onTransformEnd: handleTransformEnd })] })), jsxRuntime.exports.jsx(reactKonva.Transformer, { ref: trRef, rotateEnabled: false, anchorSize: 24 })] }) })), jsxRuntime.exports.jsxs(InputActions$1, { children: [jsxRuntime.exports.jsx("div", __assign({ onClick: hanldeCutCancel }, { children: "Cancel" })), jsxRuntime.exports.jsx(IconRotate__default["default"], { width: 24, height: 24, onClick: hanldeRotate }), jsxRuntime.exports.jsx("div", __assign({ onClick: handleCutDown }, { children: "Done" }))] })] }));
 };
-var templateObject_1$2, templateObject_2$1;
-
-var StageContainer = styled__default["default"].div(templateObject_1$1 || (templateObject_1$1 = __makeTemplateObject(["\n  position: relative;\n  width: 100%;\n  height: 100%;\n  background: #000;\n  &::before,\n  &::after {\n    position: absolute;\n    top: 0;\n    left: 0;\n    display: block;\n    width: 100%;\n    height: 180px;\n    content: '';\n    background: linear-gradient(180deg, rgba(34, 34, 34, 0.94) 0%, rgba(71, 71, 71, 0) 100%);\n    z-index: -1;\n    mix-blend-mode: darken;\n  }\n  &::after {\n    top: unset;\n    bottom: 0;\n    height: 180px;\n    background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);\n  }\n"], ["\n  position: relative;\n  width: 100%;\n  height: 100%;\n  background: #000;\n  &::before,\n  &::after {\n    position: absolute;\n    top: 0;\n    left: 0;\n    display: block;\n    width: 100%;\n    height: 180px;\n    content: '';\n    background: linear-gradient(180deg, rgba(34, 34, 34, 0.94) 0%, rgba(71, 71, 71, 0) 100%);\n    z-index: -1;\n    mix-blend-mode: darken;\n  }\n  &::after {\n    top: unset;\n    bottom: 0;\n    height: 180px;\n    background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);\n  }\n"])));
-var EditorStage = function () {
-    var _a = useEditor(), width = _a.width, height = _a.height, activeTool = _a.activeTool, pencilConfig = _a.pencilConfig, textConfig = _a.textConfig, handleSelectTool = _a.handleSelectTool;
-    var _b = useHistory(), image = _b.image, texts = _b.texts, lines = _b.lines, group = _b.group, clipRect = _b.clipRect, setLines = _b.setLines, setTexts = _b.setTexts, setImage = _b.setImage;
-    var stage = React.useRef(null);
-    var layer = React.useRef(null);
-    var scaleGroup = React.useRef(null);
-    var currentImage = React.useRef(null);
-    var currentLine = React.useRef(null);
-    var basicScaleRatio = React.useMemo(function () {
-        var rotationStage = ((group.rotation / 90) % 4) + 1;
-        var containerSize = [width, height];
-        if (rotationStage % 2 === 0) {
-            containerSize = [height, width];
-        }
-        var clipContainWidth = getImageSize.apply(void 0, __spreadArray([clipRect.width, clipRect.height], containerSize, false))[0];
-        return clipContainWidth / clipRect.width;
-    }, [clipRect, group.rotation]);
-    var _c = React.useMemo(function () {
-        var centerX = width / 2;
-        var centerY = height / 2;
-        var clipCenterX = group.x + (clipRect.x + clipRect.width / 2) * basicScaleRatio;
-        var clipCenterY = group.y + (clipRect.y + clipRect.height / 2) * basicScaleRatio;
-        var _a = rotatePoint(clipCenterX, clipCenterY, group.rotation), rdx = _a[0], rdy = _a[1];
-        var dx = isNaN(clipCenterX - centerX) ? 0 : rdx - centerX;
-        var dy = isNaN(clipCenterY - centerY) ? 0 : rdy - centerY;
-        return [dx, dy];
-    }, [group, clipRect, group.rotation, basicScaleRatio]), dx = _c[0], dy = _c[1];
-    var groupX = group.x - dx;
-    var groupY = group.y - dy;
-    var handleDrawStart = function () {
-        var drawTarget = scaleGroup.current;
-        var pos = drawTarget.getRelativePointerPosition();
-        currentLine.current = new Konva__default["default"].Line(__assign(__assign({}, pencilConfig), { strokeWidth: pencilConfig.strokeWidth / basicScaleRatio, points: pos ? [pos.x, pos.y, pos.x, pos.y] : [] }));
-        drawTarget.add(currentLine.current);
-    };
-    var handleDraw = function () {
-        var _a;
-        var lastLine = currentLine.current;
-        if (lastLine === null) {
-            return;
-        }
-        var pos = (_a = scaleGroup.current) === null || _a === void 0 ? void 0 : _a.getRelativePointerPosition();
-        var newPoints = lastLine.points().concat([pos.x, pos.y]);
-        lastLine.points(newPoints);
-    };
-    var handleDrawEnd = function () {
-        setLines(function (preLines) {
-            var _a;
-            return __spreadArray(__spreadArray([], preLines, true), [
-                __assign(__assign({}, pencilConfig), { strokeWidth: pencilConfig.strokeWidth / basicScaleRatio, points: (_a = currentLine.current) === null || _a === void 0 ? void 0 : _a.points() }),
-            ], false);
-        });
-        setTimeout(function () {
-            var _a;
-            (_a = currentLine.current) === null || _a === void 0 ? void 0 : _a.destroy();
-            currentLine.current = null;
-        }, 50);
-    };
-    var handleTextAdd = function (text) {
-        var fontSize = textConfig.fontSize / basicScaleRatio;
-        var maxWidth = textConfig.width / basicScaleRatio;
-        var textWidth = text.length * fontSize > maxWidth ? maxWidth : text.length * fontSize;
-        setTexts(function (preTexts) { return __spreadArray(__spreadArray([], preTexts, true), [
-            __assign(__assign({}, textConfig), { fontSize: fontSize, text: text, align: 'center', width: textWidth, x: clipRect.x + clipRect.width / 2 - textWidth / 2, y: clipRect.y + clipRect.height / 2 }),
-        ], false); });
-    };
-    // TODO: ts
-    var handleCut = function (clipInfo, rotation) {
-        setImage(clipInfo, rotation);
-        setTimeout(function () {
-            handleSelectTool(null);
-        }, 50);
-    };
-    var handleMouseDown = function (e) {
-        switch (activeTool) {
-            case 'Pencil':
-                handleDrawStart();
-                break;
-        }
-    };
-    var handleTouchStart = function (e) {
-        switch (activeTool) {
-            case 'Pencil':
-                handleDrawStart();
-                break;
-        }
-    };
-    var handleMouseMove = function (e) {
-        e.evt.preventDefault();
-        switch (activeTool) {
-            case 'Pencil':
-                handleDraw();
-                break;
-        }
-    };
-    var handleTouchMove = function (e) {
-        e.evt.preventDefault();
-        switch (activeTool) {
-            case 'Pencil':
-                handleDraw();
-                break;
-        }
-    };
-    var handleMouseUp = function (e) {
-        switch (activeTool) {
-            case 'Pencil':
-                handleDrawEnd();
-                break;
-        }
-    };
-    var handleTouchEnd = function (e) {
-        switch (activeTool) {
-            case 'Pencil':
-                handleDrawEnd();
-                break;
-        }
-    };
-    return (jsxRuntime.exports.jsxs(StageContainer, { children: [jsxRuntime.exports.jsx(reactKonva.Stage, __assign({ ref: stage, width: width, height: height, onMouseDown: handleMouseDown, onTouchStart: handleTouchStart, onMouseMove: handleMouseMove, onTouchMove: handleTouchMove, onMouseUp: handleMouseUp, onTouchEnd: handleTouchEnd }, { children: jsxRuntime.exports.jsx(reactKonva.Layer, __assign({ ref: layer }, { children: jsxRuntime.exports.jsxs(reactKonva.Group, __assign({ id: 'scale', ref: scaleGroup, x: groupX, y: groupY, width: group.width, height: group.height, scale: {
-                            x: basicScaleRatio,
-                            y: basicScaleRatio,
-                        }, rotation: group.rotation, clipX: clipRect.x, clipY: clipRect.y, clipHeight: clipRect.height, clipWidth: clipRect.width }, { children: [jsxRuntime.exports.jsx(reactKonva.Image, { ref: currentImage, image: image, width: group.width, height: group.height }), texts.map(function (text, index) { return (jsxRuntime.exports.jsx(reactKonva.Text, __assign({ draggable: true }, text), index)); }), lines.map(function (line, index) { return (jsxRuntime.exports.jsx(reactKonva.Line, __assign({}, line), index)); })] })) })) })), activeTool === 'Cut' && jsxRuntime.exports.jsx(ClipStage, { onCutDone: handleCut }), jsxRuntime.exports.jsx(Toolbar, { onAddText: handleTextAdd })] }));
-};
-var templateObject_1$1;
-
-var HistoryProvider = function (_a) {
-    var children = _a.children, imageUrl = _a.image;
-    var _b = useEditor(), width = _b.width, height = _b.height;
-    var _c = React.useState({
-        image: null,
-        group: {
-            width: 0,
-            height: 0,
-            x: 0,
-            y: 0,
-            rotation: 0,
-        },
-        clipRect: {
-            width: 0,
-            height: 0,
-            x: 0,
-            y: 0,
-        },
-        lines: [],
-        texts: [],
-        blurs: [],
-    }), state = _c[0], setState = _c[1];
-    var stateRef = React.useRef(state);
-    stateRef.current = state;
-    var _d = useImage__default["default"](imageUrl), mainImage = _d[0], imageStatus = _d[1];
-    var handleDataChange = function (state) {
-        console.log('historyChange', state);
-        setState(state);
-        stateRef.current = state;
-    };
-    var history = React.useRef();
-    var handleLineChange = function (callback) {
-        var _a;
-        (_a = history.current) === null || _a === void 0 ? void 0 : _a.push(__assign(__assign({}, stateRef.current), { lines: callback(stateRef.current.lines) }));
-    };
-    var handleTextChange = function (callback) {
-        var _a;
-        (_a = history.current) === null || _a === void 0 ? void 0 : _a.push(__assign(__assign({}, stateRef.current), { texts: callback(stateRef.current.texts) }));
-    };
-    var handleImagechange = function (clipRect, rotation) {
-        var _a;
-        (_a = history.current) === null || _a === void 0 ? void 0 : _a.push(__assign(__assign({}, stateRef.current), { clipRect: Object.assign({}, stateRef.current.clipRect, clipRect), group: Object.assign({}, stateRef.current.group, { rotation: rotation }) }));
-    };
-    var handleGroupChange = function (groupConfig) {
-        var _a;
-        (_a = history.current) === null || _a === void 0 ? void 0 : _a.push(__assign(__assign({}, stateRef.current), { group: Object.assign({}, stateRef.current.group, groupConfig) }));
-    };
-    var handleRedo = function () {
-        var _a;
-        (_a = history.current) === null || _a === void 0 ? void 0 : _a.redo().get();
-    };
-    var handleUndo = function () {
-        var _a;
-        (_a = history.current) === null || _a === void 0 ? void 0 : _a.undo().get();
-    };
-    React.useLayoutEffect(function () {
-        if (imageStatus === 'loaded' && mainImage) {
-            var _a = getImageSize(mainImage.width, mainImage.height, width, height), imageWidth_1 = _a[0], imageHeight_1 = _a[1];
-            history.current = new stateshot.History({
-                initialState: __assign(__assign({}, stateRef.current), { image: mainImage, group: {
-                        width: imageWidth_1,
-                        height: imageHeight_1,
-                        x: 0,
-                        y: 0,
-                        rotation: 0,
-                    }, clipRect: {
-                        width: imageWidth_1,
-                        height: imageHeight_1,
-                        x: 0,
-                        y: 0,
-                    } }),
-                useChunks: false,
-                delay: 0,
-                onChange: handleDataChange,
-            });
-            setState(function (preVal) {
-                return __assign(__assign({}, preVal), { image: mainImage, group: {
-                        width: imageWidth_1,
-                        height: imageHeight_1,
-                        x: 0,
-                        y: 0,
-                        rotation: 0,
-                    }, clipRect: {
-                        width: imageWidth_1,
-                        height: imageHeight_1,
-                        x: 0,
-                        y: 0,
-                    } });
-            });
-            console.log(history.current);
-        }
-    }, [imageStatus]);
-    return (jsxRuntime.exports.jsx(EditorContext.Provider, __assign({ value: __assign(__assign({}, state), { setGroup: handleGroupChange, setLines: handleLineChange, setTexts: handleTextChange, setImage: handleImagechange, redo: handleRedo, undo: handleUndo }) }, { children: children })));
-};
+var templateObject_1$2, templateObject_2$2;
 
 var useVisualViewport = function (callback) {
-    var _a = React.useState({
+    var _a = __read(React.useState({
         width: window.innerWidth,
         height: window.innerHeight,
-    }), viewport = _a[0], setViewport = _a[1];
+    }), 2), viewport = _a[0], setViewport = _a[1];
     React.useEffect(function () {
         var _a, _b;
         var handler = function () {
@@ -2178,42 +2176,28 @@ var useVisualViewport = function (callback) {
     return viewport;
 };
 
-var ColorItemStyle = function (props) { return react.css(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n  background: ", ";\n  box-shadow: ", ";\n  border: ", ";\n"], ["\n  background: ", ";\n  box-shadow: ", ";\n  border: ", ";\n"])), props.color, props.color === props.currentColor ? '0px 0px 4px 0px rgba(0,150,255,1)' : 'none', props.color === props.currentColor ? '1px solid #0096FF;' : '1px solid #FFFFFF'); };
-var ColorItem = styled__default["default"].div(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n  position: relative;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  color: #fff;\n  background: #fff;\n  ", "\n  &::after {\n    position: absolute;\n    top: 50%;\n    left: 50%;\n    display: block;\n    width: 30px;\n    height: 30px;\n    transform: translate(-50%, -50%);\n    content: '';\n  }\n"], ["\n  position: relative;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  color: #fff;\n  background: #fff;\n  ", "\n  &::after {\n    position: absolute;\n    top: 50%;\n    left: 50%;\n    display: block;\n    width: 30px;\n    height: 30px;\n    transform: translate(-50%, -50%);\n    content: '';\n  }\n"])), ColorItemStyle);
-var ColorSelectorStyle = function (props) { return react.css(templateObject_3 || (templateObject_3 = __makeTemplateObject(["\n  transform: translateY(calc(", "px - 100%));\n"], ["\n  transform: translateY(calc(", "px - 100%));\n"])), props.viewprotHeight - 20); };
+var ColorItemStyle = function (props) { return react.css(templateObject_1$1 || (templateObject_1$1 = __makeTemplateObject(["\n  background: ", ";\n  box-shadow: ", ";\n  border: ", ";\n"], ["\n  background: ", ";\n  box-shadow: ", ";\n  border: ", ";\n"])), props.color, props.color === props.currentColor ? '0px 0px 4px 0px rgba(0,150,255,1)' : 'none', props.color === props.currentColor ? '1px solid #0096FF;' : '1px solid #FFFFFF'); };
+var ColorItem = styled__default["default"].div(templateObject_2$1 || (templateObject_2$1 = __makeTemplateObject(["\n  position: relative;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  color: #fff;\n  background: #fff;\n  ", "\n  &::after {\n    position: absolute;\n    top: 50%;\n    left: 50%;\n    display: block;\n    width: 30px;\n    height: 30px;\n    transform: translate(-50%, -50%);\n    content: '';\n  }\n"], ["\n  position: relative;\n  width: 16px;\n  height: 16px;\n  border-radius: 50%;\n  color: #fff;\n  background: #fff;\n  ", "\n  &::after {\n    position: absolute;\n    top: 50%;\n    left: 50%;\n    display: block;\n    width: 30px;\n    height: 30px;\n    transform: translate(-50%, -50%);\n    content: '';\n  }\n"])), ColorItemStyle);
+var ColorSelectorStyle = function (props) { return react.css(templateObject_3$1 || (templateObject_3$1 = __makeTemplateObject(["\n  transform: translateY(calc(", "px - 100%));\n"], ["\n  transform: translateY(calc(", "px - 100%));\n"])), props.viewprotHeight - 20); };
 var ColorSelector = styled__default["default"].div(templateObject_4 || (templateObject_4 = __makeTemplateObject(["\n  position: absolute;\n  top: 0;\n  left: 0;\n  display: flex;\n  align-items: center;\n  justify-content: space-around;\n  width: 100%;\n  padding: 0 30px;\n  transition: transform 0.2s ease;\n  ", "\n"], ["\n  position: absolute;\n  top: 0;\n  left: 0;\n  display: flex;\n  align-items: center;\n  justify-content: space-around;\n  width: 100%;\n  padding: 0 30px;\n  transition: transform 0.2s ease;\n  ", "\n"])), ColorSelectorStyle);
 var WordInputModal = styled__default["default"].div(templateObject_5 || (templateObject_5 = __makeTemplateObject(["\n  position: fixed;\n  top: 0;\n  left: 0;\n  display: flex;\n  justify-content: center;\n  width: 100%;\n  height: 100%;\n  padding: 100px 15px;\n  background: rgba(0, 0, 0, 0.5);\n"], ["\n  position: fixed;\n  top: 0;\n  left: 0;\n  display: flex;\n  justify-content: center;\n  width: 100%;\n  height: 100%;\n  padding: 100px 15px;\n  background: rgba(0, 0, 0, 0.5);\n"])));
 var InputArea = styled__default["default"].textarea(templateObject_6 || (templateObject_6 = __makeTemplateObject(["\n  width: 100%;\n  height: 105px;\n  padding: 0 12px;\n  background: #ffffff;\n  box-shadow: 0px 0px 8px 0px rgba(0, 150, 255, 0.4);\n  border-radius: 8px;\n  border: 1px solid #38a1f6;\n  resize: none;\n  font-size: 30px;\n  font-weight: 500;\n  color: #222222;\n  line-height: 42px;\n"], ["\n  width: 100%;\n  height: 105px;\n  padding: 0 12px;\n  background: #ffffff;\n  box-shadow: 0px 0px 8px 0px rgba(0, 150, 255, 0.4);\n  border-radius: 8px;\n  border: 1px solid #38a1f6;\n  resize: none;\n  font-size: 30px;\n  font-weight: 500;\n  color: #222222;\n  line-height: 42px;\n"])));
 var InputActions = styled__default["default"].div(templateObject_7 || (templateObject_7 = __makeTemplateObject(["\n  position: absolute;\n  top: 0;\n  left: 0;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  width: 100%;\n  padding: 12px 20px;\n  font-size: 16px;\n  font-weight: 400;\n  color: #ffffff;\n  line-height: 16px;\n  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.5);\n  z-index: 1000;\n  div {\n    position: relative;\n    &::after {\n      position: absolute;\n      top: 50%;\n      left: 50%;\n      display: block;\n      width: 200%;\n      height: 200%;\n      content: '';\n      transform: translate(-50%, -50%);\n    }\n  }\n"], ["\n  position: absolute;\n  top: 0;\n  left: 0;\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  width: 100%;\n  padding: 12px 20px;\n  font-size: 16px;\n  font-weight: 400;\n  color: #ffffff;\n  line-height: 16px;\n  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.5);\n  z-index: 1000;\n  div {\n    position: relative;\n    &::after {\n      position: absolute;\n      top: 50%;\n      left: 50%;\n      display: block;\n      width: 200%;\n      height: 200%;\n      content: '';\n      transform: translate(-50%, -50%);\n    }\n  }\n"])));
-var WordInputProvider = function (_a) {
-    var children = _a.children;
+var WordInput = function (_a) {
+    var _b = _a.defaultWord, defaultWord = _b === void 0 ? '' : _b, onDone = _a.onDone, onCancel = _a.onCancel;
     var textareaEl = React.useRef(null);
-    var successCallback = React.useRef();
     var viewprot = useVisualViewport(function () {
         var _a;
         (_a = textareaEl.current) === null || _a === void 0 ? void 0 : _a.focus();
     });
-    var _b = useEditor(), editorColors = _b.editorColors, textConfig = _b.textConfig, changeColor = _b.changeColor;
-    var _c = React.useState(false), isInputShow = _c[0], setIsInputShow = _c[1];
-    var handleShow = function (defaultWord, onSuccess) {
-        var _a;
-        if (defaultWord === void 0) { defaultWord = ''; }
-        ReactDOM.flushSync(function () {
-            setIsInputShow(true);
-        });
-        (_a = textareaEl.current) === null || _a === void 0 ? void 0 : _a.focus();
-        textareaEl.current.value = defaultWord;
-        successCallback.current = onSuccess;
-    };
+    var _c = useEditor(), editorColors = _c.editorColors, textConfig = _c.textConfig, changeColor = _c.changeColor;
     var handleCancel = function (e) {
         e.stopPropagation();
-        setIsInputShow(false);
+        onCancel === null || onCancel === void 0 ? void 0 : onCancel();
     };
     var hanldeDone = function (e) {
-        var _a;
         e.stopPropagation();
-        (_a = successCallback.current) === null || _a === void 0 ? void 0 : _a.call(successCallback, textareaEl.current.value);
-        setIsInputShow(false);
+        onDone === null || onDone === void 0 ? void 0 : onDone(textareaEl.current.value);
     };
     var handleChangeColor = function (e, color) {
         var _a;
@@ -2222,20 +2206,320 @@ var WordInputProvider = function (_a) {
         changeColor(color);
         (_a = textareaEl.current) === null || _a === void 0 ? void 0 : _a.focus();
     };
-    return (jsxRuntime.exports.jsxs(WordInputContext.Provider, __assign({ value: {
-            isShow: isInputShow,
-            startInput: handleShow,
-        } }, { children: [children, isInputShow &&
-                ReactDOM__default["default"].createPortal(jsxRuntime.exports.jsxs(WordInputModal, __assign({ onClick: function (e) { return e.stopPropagation(); } }, { children: [jsxRuntime.exports.jsxs(InputActions, { children: [jsxRuntime.exports.jsx("div", __assign({ onClick: handleCancel }, { children: "Cancel" })), jsxRuntime.exports.jsx("div", __assign({ onClick: hanldeDone }, { children: "Done" }))] }), jsxRuntime.exports.jsx(InputArea, { ref: textareaEl, autoComplete: 'off', wrap: 'hard', style: { color: textConfig.fill } }), jsxRuntime.exports.jsx(ColorSelector, __assign({ viewprotHeight: viewprot.height }, { children: editorColors === null || editorColors === void 0 ? void 0 : editorColors.map(function (color) { return (jsxRuntime.exports.jsx(ColorItem, { color: color, currentColor: textConfig.fill, onClick: function (e) { return handleChangeColor(e, color); } }, color)); }) }))] })), document.body)] })));
+    React.useEffect(function () {
+        var _a;
+        (_a = textareaEl.current) === null || _a === void 0 ? void 0 : _a.focus();
+        textareaEl.current.value = defaultWord;
+    }, []);
+    return ReactDOM__default["default"].createPortal(jsxRuntime.exports.jsxs(WordInputModal, __assign({ onClick: function (e) { return e.stopPropagation(); } }, { children: [jsxRuntime.exports.jsxs(InputActions, { children: [jsxRuntime.exports.jsx("div", __assign({ onClick: handleCancel }, { children: "Cancel" })), jsxRuntime.exports.jsx("div", __assign({ onClick: hanldeDone }, { children: "Done" }))] }), jsxRuntime.exports.jsx(InputArea, { ref: textareaEl, autoComplete: 'off', wrap: 'hard', style: { color: textConfig.fill } }), jsxRuntime.exports.jsx(ColorSelector, __assign({ viewprotHeight: viewprot.height }, { children: editorColors === null || editorColors === void 0 ? void 0 : editorColors.map(function (color) { return (jsxRuntime.exports.jsx(ColorItem, { color: color, currentColor: textConfig.fill, onClick: function (e) { return handleChangeColor(e, color); } }, color)); }) }))] })), document.body);
 };
-var templateObject_1, templateObject_2, templateObject_3, templateObject_4, templateObject_5, templateObject_6, templateObject_7;
+var templateObject_1$1, templateObject_2$1, templateObject_3$1, templateObject_4, templateObject_5, templateObject_6, templateObject_7;
+
+var StageContainer = styled__default["default"].div(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n  position: relative;\n  width: 100%;\n  height: 100%;\n  background: #000;\n  &::before,\n  &::after {\n    position: absolute;\n    top: 0;\n    left: 0;\n    display: block;\n    width: 100%;\n    height: 180px;\n    content: '';\n    background: linear-gradient(180deg, rgba(34, 34, 34, 0.94) 0%, rgba(71, 71, 71, 0) 100%);\n    z-index: -1;\n    mix-blend-mode: darken;\n  }\n  &::after {\n    top: unset;\n    bottom: 0;\n    height: 180px;\n    background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);\n  }\n"], ["\n  position: relative;\n  width: 100%;\n  height: 100%;\n  background: #000;\n  &::before,\n  &::after {\n    position: absolute;\n    top: 0;\n    left: 0;\n    display: block;\n    width: 100%;\n    height: 180px;\n    content: '';\n    background: linear-gradient(180deg, rgba(34, 34, 34, 0.94) 0%, rgba(71, 71, 71, 0) 100%);\n    z-index: -1;\n    mix-blend-mode: darken;\n  }\n  &::after {\n    top: unset;\n    bottom: 0;\n    height: 180px;\n    background: linear-gradient(180deg, rgba(71, 71, 71, 0) 0%, #222222 100%);\n  }\n"])));
+var DeleteArea = styled__default["default"].div(templateObject_3 || (templateObject_3 = __makeTemplateObject(["\n  ", "\n  display: var(--is-show);\n  flex-direction: column;\n  align-items: center;\n  justify-content: space-between;\n  width: 150px;\n  height: 80px;\n  padding: 14px 0 15px;\n  background: #e2f0fe;\n  box-shadow: 0px 0px 15px 0px rgba(0, 150, 255, 0.6);\n  border-radius: 10px;\n  border: 1px solid var(--fill-color);\n  font-size: 14px;\n  font-weight: 500;\n  color: var(--fill-color);\n  line-height: 20px;\n  opacity: var(--optaicy);\n  transition: all 0.1s ease;\n  svg {\n    width: 24px;\n    height: 24px;\n    fill: var(--fill-color);\n    transition: inherit;\n  }\n"], ["\n  ", "\n  display: var(--is-show);\n  flex-direction: column;\n  align-items: center;\n  justify-content: space-between;\n  width: 150px;\n  height: 80px;\n  padding: 14px 0 15px;\n  background: #e2f0fe;\n  box-shadow: 0px 0px 15px 0px rgba(0, 150, 255, 0.6);\n  border-radius: 10px;\n  border: 1px solid var(--fill-color);\n  font-size: 14px;\n  font-weight: 500;\n  color: var(--fill-color);\n  line-height: 20px;\n  opacity: var(--optaicy);\n  transition: all 0.1s ease;\n  svg {\n    width: 24px;\n    height: 24px;\n    fill: var(--fill-color);\n    transition: inherit;\n  }\n"])), function (props) { return react.css(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n    --optaicy: ", ";\n    --fill-color: ", ";\n    --is-show: ", ";\n  "], ["\n    --optaicy: ", ";\n    --fill-color: ", ";\n    --is-show: ", ";\n  "])), props.deleteAreaStatus === 'active' ? 0.9 : 1, props.deleteAreaStatus === 'active' ? '#ff6650' : '#0096ff', props.deleteAreaStatus === 'none' ? 'none' : 'flex'); });
+var EditorStage = function () {
+    var _a = useEditor(), width = _a.width, height = _a.height, activeTool = _a.activeTool, pencilConfig = _a.pencilConfig, textConfig = _a.textConfig, handleSelectTool = _a.handleSelectTool;
+    var _b = useHistory(), image = _b.image, texts = _b.texts, lines = _b.lines, group = _b.group, clipRect = _b.clipRect, setLines = _b.setLines, setTexts = _b.setTexts, setImage = _b.setImage, setBlurs = _b.setBlurs;
+    var _c = __read(React.useState([]), 2), currentBlurPos = _c[0], setBlurPos = _c[1];
+    var _d = __read(React.useState('none'), 2), deleteAreaStatus = _d[0], setDeleteAreaStatus = _d[1];
+    var stage = React.useRef(null);
+    var layer = React.useRef(null);
+    var scaleGroup = React.useRef(null);
+    var clipGroup = React.useRef(null);
+    var currentImage = React.useRef(null);
+    var currentLine = React.useRef(null);
+    var trRef = React.useRef(null);
+    var deleteAreaRef = React.useRef(null);
+    var basicScaleRatio = React.useMemo(function () {
+        var rotationStage = ((group.rotation / 90) % 4) + 1;
+        var containerSize = [width, height * 0.8];
+        if (rotationStage % 2 === 0) {
+            containerSize = [height * 0.8, width];
+        }
+        var _a = __read(getImageSize.apply(void 0, __spreadArray([clipRect.width, clipRect.height], __read(containerSize), false)), 1), clipContainWidth = _a[0];
+        return clipContainWidth / clipRect.width;
+    }, [clipRect, group.rotation]);
+    var _e = __read(React.useMemo(function () {
+        var centerX = width / 2;
+        var centerY = (height * 0.8) / 2;
+        var clipCenterX = group.x + (clipRect.x + clipRect.width / 2) * basicScaleRatio;
+        var clipCenterY = group.y + (clipRect.y + clipRect.height / 2) * basicScaleRatio;
+        var _a = __read(rotatePoint(clipCenterX, clipCenterY, group.rotation), 2), rdx = _a[0], rdy = _a[1];
+        var dx = isNaN(clipCenterX - centerX) ? 0 : rdx - centerX;
+        var dy = isNaN(clipCenterY - centerY) ? 0 : rdy - centerY;
+        return [dx, dy];
+    }, [group, clipRect, group.rotation, basicScaleRatio]), 2), dx = _e[0], dy = _e[1];
+    var groupX = group.x - dx;
+    var groupY = group.y - dy;
+    var handleDrawStart = function () {
+        var drawTarget = scaleGroup.current;
+        var pos = drawTarget.getRelativePointerPosition();
+        if (activeTool === 'Pencil') {
+            currentLine.current = new Konva__default["default"].Line(__assign(__assign({}, pencilConfig), { strokeWidth: pencilConfig.strokeWidth / basicScaleRatio, points: pos ? [pos.x, pos.y, pos.x, pos.y] : [] }));
+            drawTarget.add(currentLine.current);
+        }
+        else if (activeTool === 'Blur') {
+            setBlurPos(function (preBlurPos) { return __spreadArray(__spreadArray([], __read(preBlurPos), false), [pos], false); });
+        }
+    };
+    var handleDraw = function () {
+        var _a;
+        var lastLine = currentLine.current;
+        var pos = (_a = scaleGroup.current) === null || _a === void 0 ? void 0 : _a.getRelativePointerPosition();
+        if (activeTool === 'Pencil' && lastLine) {
+            var newPoints = lastLine.points().concat([pos.x, pos.y]);
+            lastLine.points(newPoints);
+        }
+        if (activeTool === 'Blur') {
+            setBlurPos(function (preBlurPos) { return __spreadArray(__spreadArray([], __read(preBlurPos), false), [pos], false); });
+        }
+    };
+    var handleDrawEnd = function () {
+        var lastLine = currentLine.current;
+        if (activeTool === 'Pencil' && lastLine) {
+            setLines(function (preLines) {
+                return __spreadArray(__spreadArray([], __read(preLines), false), [
+                    __assign(__assign({}, pencilConfig), { strokeWidth: pencilConfig.strokeWidth / basicScaleRatio, points: lastLine.points() }),
+                ], false);
+            });
+            setTimeout(function () {
+                lastLine.destroy();
+                currentLine.current = null;
+            }, 50);
+        }
+        if (activeTool === 'Blur') {
+            setBlurs(function (preBlurs) { return __spreadArray(__spreadArray([], __read(preBlurs), false), [currentBlurPos], false); });
+            setBlurPos([]);
+        }
+    };
+    var handleTextAdd = function (text) {
+        if (text) {
+            var fontSize_1 = textConfig.fontSize / basicScaleRatio;
+            var maxWidth = textConfig.width / basicScaleRatio;
+            var textWidth_1 = text.length * fontSize_1 > maxWidth ? maxWidth : text.length * fontSize_1;
+            setTexts(function (preTexts) { return __spreadArray(__spreadArray([], __read(preTexts), false), [
+                __assign(__assign({}, textConfig), { fontSize: fontSize_1, text: text, align: 'center', width: textWidth_1, x: group.width / 2, y: group.height / 2, offsetX: textWidth_1 / 2, offsetY: fontSize_1 / 2, rotation: -group.rotation }),
+            ], false); });
+            handleSelectTool(null);
+        }
+    };
+    var handleTextDragMove = function (e) {
+        var _a;
+        var currentText = e.target;
+        var position = currentText.position();
+        var textHeight = currentText.height();
+        var deleteAreaTop = (_a = deleteAreaRef.current) === null || _a === void 0 ? void 0 : _a.y();
+        if (position.y >= deleteAreaTop - textHeight) {
+            setDeleteAreaStatus('active');
+        }
+        else if (position.y >= group.height) {
+            setDeleteAreaStatus('show');
+        }
+        else {
+            setDeleteAreaStatus('none');
+        }
+    };
+    var handleTextDragEnd = function (e) {
+        var _a;
+        var currentText = e.target;
+        var index = currentText.attrs.id.slice(-1);
+        switch (deleteAreaStatus) {
+            case 'show':
+            case 'none':
+                var position_1 = currentText.position();
+                setTexts(function (preTexts) {
+                    preTexts[index].x = position_1.x;
+                    preTexts[index].y = position_1.y;
+                    return preTexts;
+                });
+                break;
+            case 'active':
+                setTexts(function (preTexts) {
+                    preTexts.splice(index, 1);
+                    return __spreadArray([], __read(preTexts), false);
+                });
+                break;
+        }
+        if (deleteAreaStatus !== 'none') {
+            currentText === null || currentText === void 0 ? void 0 : currentText.moveTo(clipGroup.current);
+            (_a = trRef.current) === null || _a === void 0 ? void 0 : _a.nodes([]);
+            setDeleteAreaStatus('none');
+        }
+    };
+    // TODO: ts
+    var handleCut = function (clipInfo, rotation) {
+        setImage(clipInfo, rotation);
+        setTimeout(function () {
+            handleSelectTool(null);
+        }, 50);
+    };
+    var handleMouseDown = function (e) {
+        if (['Blur', 'Pencil'].includes(activeTool)) {
+            handleDrawStart();
+        }
+    };
+    var handleTouchStart = function (e) {
+        var _a, _b;
+        if (['Blur', 'Pencil'].includes(activeTool)) {
+            handleDrawStart();
+        }
+        else if (e.target.className === 'Text') {
+            e.target.moveTo(scaleGroup.current);
+            (_a = trRef.current) === null || _a === void 0 ? void 0 : _a.nodes([e.target]);
+        }
+        else if (e.target === currentImage.current) {
+            (_b = trRef.current) === null || _b === void 0 ? void 0 : _b.nodes([]);
+        }
+    };
+    var handleMouseMove = function (e) {
+        e.evt.preventDefault();
+        if (['Blur', 'Pencil'].includes(activeTool)) {
+            handleDraw();
+        }
+    };
+    var handleTouchMove = function (e) {
+        e.evt.preventDefault();
+        if (['Blur', 'Pencil'].includes(activeTool)) {
+            handleDraw();
+        }
+    };
+    var handleMouseUp = function (e) {
+        if (['Blur', 'Pencil'].includes(activeTool)) {
+            handleDrawEnd();
+        }
+    };
+    var handleTouchEnd = function (e) {
+        if (['Blur', 'Pencil'].includes(activeTool)) {
+            handleDrawEnd();
+        }
+    };
+    React.useEffect(function () {
+        var _a;
+        deleteAreaRef.current = (_a = stage.current) === null || _a === void 0 ? void 0 : _a.findOne('#delete-area');
+    }, []);
+    return (jsxRuntime.exports.jsxs(StageContainer, { children: [jsxRuntime.exports.jsx(reactKonva.Stage, __assign({ ref: stage, width: width, height: height, onMouseDown: handleMouseDown, onTouchStart: handleTouchStart, onMouseMove: handleMouseMove, onTouchMove: handleTouchMove, onMouseUp: handleMouseUp, onTouchEnd: handleTouchEnd }, { children: jsxRuntime.exports.jsxs(reactKonva.Layer, __assign({ ref: layer }, { children: [jsxRuntime.exports.jsxs(reactKonva.Group, __assign({ ref: scaleGroup, x: groupX, y: groupY, width: group.width, height: group.height, scale: {
+                                x: basicScaleRatio,
+                                y: basicScaleRatio,
+                            }, rotation: group.rotation }, { children: [jsxRuntime.exports.jsxs(reactKonva.Group, __assign({ ref: clipGroup, clipX: clipRect.x, clipY: clipRect.y, clipHeight: clipRect.height, clipWidth: clipRect.width }, { children: [jsxRuntime.exports.jsx(reactKonva.Image, { ref: currentImage, image: image, width: group.width, height: group.height }), jsxRuntime.exports.jsx(Blurs, { currentBlur: currentBlurPos }), texts.map(function (text, index) { return (jsxRuntime.exports.jsx(reactKonva.Text, __assign({ id: "text-".concat(index) }, text, { x: text.x, y: text.y, draggable: true, onDragMove: handleTextDragMove, onDragEnd: handleTextDragEnd }), index)); }), lines.map(function (line, index) { return (jsxRuntime.exports.jsx(reactKonva.Line, __assign({}, line), index)); })] })), jsxRuntime.exports.jsx(reactKonvaUtils.Html, __assign({ groupProps: {
+                                        id: 'delete-area',
+                                        y: height - 120,
+                                        x: width / 2 - 75,
+                                        width: 150,
+                                        height: 80,
+                                        // offsetX: groupX,
+                                        // offsetY: groupY,
+                                    } }, { children: jsxRuntime.exports.jsxs(DeleteArea, __assign({ deleteAreaStatus: deleteAreaStatus }, { children: [jsxRuntime.exports.jsx(IconDelete__default["default"], {}), jsxRuntime.exports.jsx("div", { children: "Drag here to delete" })] })) }))] })), jsxRuntime.exports.jsx(reactKonva.Transformer, { ref: trRef, rotateEnabled: false, anchorStroke: 'rgba(0,0,0,0)', anchorFill: 'rgba(0,0,0,0)', borderStroke: '#ccc', keepRatio: true })] })) })), activeTool === 'Cut' && jsxRuntime.exports.jsx(ClipStage, { onCutDone: handleCut }), activeTool === 'Words' && (jsxRuntime.exports.jsx(WordInput, { onDone: handleTextAdd, onCancel: function () { return handleSelectTool(null); } })), deleteAreaStatus === 'none' && jsxRuntime.exports.jsx(Toolbar, {})] }));
+};
+var templateObject_1, templateObject_2, templateObject_3;
+
+var HistoryProvider = function (_a) {
+    var children = _a.children, imageUrl = _a.image;
+    var _b = useEditor(), width = _b.width, height = _b.height;
+    var _c = __read(React.useState({
+        group: {
+            width: 0,
+            height: 0,
+            x: 0,
+            y: 0,
+            rotation: 0,
+        },
+        clipRect: {
+            width: 0,
+            height: 0,
+            x: 0,
+            y: 0,
+        },
+        lines: [],
+        texts: [],
+        blurs: [],
+    }), 2), state = _c[0], setState = _c[1];
+    var _d = __read(React.useState(false), 2), isInt = _d[0], setIsInt = _d[1];
+    var stateRef = React.useRef(state);
+    stateRef.current = state;
+    var _e = __read(useImage__default["default"](imageUrl), 2), mainImage = _e[0], imageStatus = _e[1];
+    var handleDataChange = function (state) {
+        console.log('historyChange', state);
+        setState(state);
+        stateRef.current = state;
+    };
+    var history = React.useRef();
+    var handleLineChange = function (callback) {
+        var _a;
+        (_a = history.current) === null || _a === void 0 ? void 0 : _a.pushSync(__assign(__assign({}, stateRef.current), { lines: callback(stateRef.current.lines) }));
+    };
+    var handleBlurChange = function (callback) {
+        var _a;
+        (_a = history.current) === null || _a === void 0 ? void 0 : _a.pushSync(__assign(__assign({}, stateRef.current), { blurs: callback(stateRef.current.blurs) }));
+    };
+    var handleTextChange = function (callback) {
+        var _a;
+        (_a = history.current) === null || _a === void 0 ? void 0 : _a.pushSync(__assign(__assign({}, stateRef.current), { texts: callback(stateRef.current.texts) }));
+    };
+    var handleImagechange = function (clipRect, rotation) {
+        var _a;
+        (_a = history.current) === null || _a === void 0 ? void 0 : _a.pushSync(__assign(__assign({}, stateRef.current), { clipRect: Object.assign({}, stateRef.current.clipRect, clipRect), group: Object.assign({}, stateRef.current.group, { rotation: rotation }) }));
+    };
+    var handleGroupChange = function (groupConfig) {
+        var _a;
+        (_a = history.current) === null || _a === void 0 ? void 0 : _a.pushSync(__assign(__assign({}, stateRef.current), { group: Object.assign({}, stateRef.current.group, groupConfig) }));
+    };
+    var handleRedo = function () {
+        var _a, _b;
+        if ((_a = history.current) === null || _a === void 0 ? void 0 : _a.hasRedo) {
+            (_b = history.current) === null || _b === void 0 ? void 0 : _b.redo().get();
+        }
+    };
+    var handleUndo = function () {
+        var _a, _b;
+        if ((_a = history.current) === null || _a === void 0 ? void 0 : _a.hasUndo) {
+            (_b = history.current) === null || _b === void 0 ? void 0 : _b.undo().get();
+        }
+    };
+    React.useLayoutEffect(function () {
+        if (imageStatus === 'loaded' && mainImage) {
+            var _a = __read(getImageSize(mainImage.width, mainImage.height, width, height), 2), imageWidth_1 = _a[0], imageHeight_1 = _a[1];
+            history.current = new stateshot.History({
+                initialState: __assign(__assign({}, stateRef.current), { image: mainImage, group: {
+                        width: imageWidth_1,
+                        height: imageHeight_1,
+                        x: 0,
+                        y: 0,
+                        rotation: 0,
+                    }, clipRect: {
+                        width: imageWidth_1,
+                        height: imageHeight_1,
+                        x: 0,
+                        y: 0,
+                    } }),
+                delay: 0,
+                onChange: handleDataChange,
+            });
+            setState(function (preVal) {
+                return __assign(__assign({}, preVal), { group: {
+                        width: imageWidth_1,
+                        height: imageHeight_1,
+                        x: 0,
+                        y: 0,
+                        rotation: 0,
+                    }, clipRect: {
+                        width: imageWidth_1,
+                        height: imageHeight_1,
+                        x: 0,
+                        y: 0,
+                    } });
+            });
+            setIsInt(true);
+            console.log(history.current);
+        }
+    }, [imageStatus]);
+    return (jsxRuntime.exports.jsx(EditorContext.Provider, __assign({ value: __assign(__assign({}, state), { image: mainImage, setGroup: handleGroupChange, setLines: handleLineChange, setBlurs: handleBlurChange, setTexts: handleTextChange, setImage: handleImagechange, redo: handleRedo, undo: handleUndo }) }, { children: isInt && children })));
+};
 
 // TODO: i18n
 // TODO: 配置项完善
-// TODO: 马赛克
 var Editor = function (_a) {
     var image = _a.image, width = _a.width, height = _a.height;
-    return (jsxRuntime.exports.jsx(EditorProvider, __assign({ width: width, height: height }, { children: jsxRuntime.exports.jsx(HistoryProvider, __assign({ image: image }, { children: jsxRuntime.exports.jsx(WordInputProvider, { children: jsxRuntime.exports.jsx(EditorStage, { image: image }) }) })) })));
+    return (jsxRuntime.exports.jsx(EditorProvider, __assign({ width: width, height: height }, { children: jsxRuntime.exports.jsx(HistoryProvider, __assign({ image: image }, { children: jsxRuntime.exports.jsx(EditorStage, {}) })) })));
 };
 
 exports.Editor = Editor;
