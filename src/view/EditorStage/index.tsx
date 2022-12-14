@@ -223,6 +223,10 @@ const EditorStage: ComponentType<EditorProps> = () => {
     }
   };
 
+  const handleRemoveTransfromer = () => {
+    trRef.current?.nodes([]);
+  };
+
   // TODO: ts
   const handleCut = (clipInfo: any, rotation: number) => {
     setImage(clipInfo, rotation);
@@ -342,7 +346,6 @@ const EditorStage: ComponentType<EditorProps> = () => {
         onTouchEnd={handleTouchEnd}
       >
         <Layer ref={layer}>
-          {/* scale group */}
           <Group
             ref={scaleGroup}
             x={groupX}
@@ -409,7 +412,7 @@ const EditorStage: ComponentType<EditorProps> = () => {
       {activeTool === 'Words' && (
         <WordInput onDone={handleTextAdd} onCancel={() => handleSelectTool(null)} />
       )}
-      {deleteAreaStatus === 'none' && <Toolbar />}
+      {deleteAreaStatus === 'none' && <Toolbar onSelect={handleRemoveTransfromer} />}
     </StageContainer>
   );
 };
