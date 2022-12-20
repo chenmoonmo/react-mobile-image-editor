@@ -18,5 +18,9 @@
     "jsx": "react-jsx",
     "downlevelIteration": true
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    "example",
+    "src/global.d.ts"
+  ]
 }

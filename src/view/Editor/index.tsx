@@ -7,7 +7,7 @@ type EditorRefType = {
   exportImage: () => string;
 };
 
-type EditorPropsType = {
+export type EditorPropsType = {
   image: string;
   width?: number;
   height?: number;
