@@ -1,8 +1,8 @@
 {
-  "name": "photo-editor",
+  "name": "react-mobile-image-editor",
   "version": "1.0.5",
-  "main": "dist/photo-editor.umd.js",
-  "module": "dist/photo-editor.es.js",
+  "main": "dist/react-mobile-image-editor.umd.js",
+  "module": "dist/react-mobile-image-editor.es.js",
   "types": "dist/index.d.ts",
   "dependencies": {
     "@emotion/react": "^11.10.5",
