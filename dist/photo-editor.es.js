@@ -1,6 +1,6 @@
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import * as React from 'react';
-import React__default, { useState, useContext, useMemo, useRef, useLayoutEffect, useEffect, createElement } from 'react';
+import React__default, { useState, useContext, useMemo, useRef, useLayoutEffect, useEffect, forwardRef, useImperativeHandle, createElement } from 'react';
 import { Group, Rect, Stage, Layer, Image, Text, Line, Transformer } from 'react-konva';
 import Konva from 'konva';
 import styled from '@emotion/styled';
@@ -292,8 +292,9 @@ var ColorItem$1 = styled.div(templateObject_6$1 || (templateObject_6$1 = __makeT
     return css(templateObject_5$1 || (templateObject_5$1 = __makeTemplateObject(["\n      background: ", ";\n      box-shadow: ", ";\n      border: ", ";\n    "], ["\n      background: ", ";\n      box-shadow: ", ";\n      border: ", ";\n    "])), props.color, props.color === props.currentColor ? '0px 0px 4px 0px #0096ff' : 'none', props.color === props.currentColor ? '1px solid #0096FF;' : '1px solid #FFFFFF');
 });
 var ColorSelector$1 = styled.div(templateObject_7$1 || (templateObject_7$1 = __makeTemplateObject(["\n  display: flex;\n  align-items: center;\n  justify-content: space-around;\n  width: 100%;\n  padding: 0 30px;\n  box-sizing: border-box;\n"], ["\n  display: flex;\n  align-items: center;\n  justify-content: space-around;\n  width: 100%;\n  padding: 0 30px;\n  box-sizing: border-box;\n"])));
-var Toolbar = function () {
-    var _a = useEditor(), activeTool = _a.activeTool, pencilConfig = _a.pencilConfig, editorColors = _a.editorColors, handleSelectTool = _a.handleSelectTool, changeColor = _a.changeColor;
+var Toolbar = function (_a) {
+    var onSelect = _a.onSelect;
+    var _b = useEditor(), activeTool = _b.activeTool, pencilConfig = _b.pencilConfig, editorColors = _b.editorColors, handleSelectTool = _b.handleSelectTool, changeColor = _b.changeColor;
     var undo = useHistory().undo;
     var isColorSelectorShow = useMemo(function () {
         return ['Pencil'].includes(activeTool);
@@ -312,6 +313,7 @@ var Toolbar = function () {
             default:
                 handleSelectTool(tool);
         }
+        onSelect === null || onSelect === void 0 ? void 0 : onSelect();
     };
     return (jsxs(ToolContainer, { children: [isColorSelectorShow && (jsx(ColorSelector$1, { children: editorColors === null || editorColors === void 0 ? void 0 : editorColors.map(function (color) { return (jsx(ColorItem$1, { color: color, currentColor: pencilConfig.stroke, onClick: function () { return changeColor(color); } }, color)); }) })), !['Words', 'Cut'].includes(activeTool) && (jsx(ToolbarContainer, { children: ToolsMap.map(function (tool) { return (jsxs(ToolbarItem, __assign({ onClick: function () { return handleToolSelect(tool.name); }, isActive: tool.name === activeTool }, { children: [tool.icon, jsx("span", { children: tool.name })] }), tool.name)); }) }))] }));
 };
@@ -847,7 +849,7 @@ var ClipStage = function (_a) {
     return (jsxs(ClipContainer, { children: [jsx(Stage, __assign({ ref: stageRef, width: width, height: height, scale: {
                     x: 0.96,
                     y: 0.96,
-                }, x: width * 0.02, y: height * 0.02, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd }, { children: jsxs(Layer, { children: [jsxs(Group, __assign({ x: groupX, y: groupY, width: group.width, height: group.height, scaleX: basicScaleRatio, scaleY: basicScaleRatio, rotation: rotation }, { children: [jsxs(Group, __assign({ ref: scaleGroup }, { children: [jsx(Image, { ref: currentImage, image: image, width: group.width, height: group.height }), jsx(Blurs, {}, 'clipBlur'), texts.map(function (text, index) { return (jsx(Text, __assign({ draggable: true }, text), index)); }), lines.map(function (line, index) { return (jsx(Line, __assign({}, line), index)); })] })), jsx(Rect, { ref: reRef, x: clipInfo.x, y: clipInfo.y, width: clipInfo.width, height: clipInfo.height, fillPatternImage: clipRectFill, fillPriority: 'pattern', fillPatternScale: {
+                }, x: width * 0.02, y: height * 0.02, onTouchMove: handleTouchMove, onTouchEnd: handleTouchEnd }, { children: jsxs(Layer, { children: [jsxs(Group, __assign({ x: groupX, y: groupY, width: group.width, height: group.height, scaleX: basicScaleRatio, scaleY: basicScaleRatio, rotation: rotation }, { children: [jsxs(Group, __assign({ ref: scaleGroup }, { children: [jsx(Image, { ref: currentImage, image: image, width: group.width, height: group.height }), jsx(Blurs, {}, 'clipBlur'), texts.map(function (text, index) { return (jsx(Text, __assign({ draggable: true }, text), index)); }), lines.map(function (line, index) { return (jsx(Line, __assign({}, line), index)); })] })), jsx(Rect, { ref: reRef, x: clipInfo.x, y: clipInfo.y, width: clipInfo.width, height: clipInfo.height, fillPriority: 'pattern', fillPatternImage: clipRectFill, fillPatternRepeat: 'no-repeat', fillPatternScale: {
                                         x: 1 / basicScaleRatio,
                                         y: 1 / basicScaleRatio,
                                     }, onTransformEnd: handleTransformEnd })] })), jsx(Transformer, { ref: trRef, rotateEnabled: false, anchorSize: 24 })] }) })), jsxs(InputActions$1, { children: [jsx("div", __assign({ onClick: hanldeCutCancel }, { children: "Cancel" })), jsx(SvgIconRotate, { width: 24, height: 24, onClick: hanldeRotate }), jsx("div", __assign({ onClick: handleCutDown }, { children: "Done" }))] })] }));
@@ -937,7 +939,7 @@ var SvgIconDelete = function SvgIconDelete(props) {
 
 var StageContainer = styled.div(templateObject_1 || (templateObject_1 = __makeTemplateObject(["\n  position: relative;\n  background: #000;\n"], ["\n  position: relative;\n  background: #000;\n"])));
 var DeleteArea = styled.div(templateObject_3 || (templateObject_3 = __makeTemplateObject(["\n  ", "\n  display: var(--is-show);\n  flex-direction: column;\n  align-items: center;\n  justify-content: space-between;\n  width: 150px;\n  height: 80px;\n  padding: 14px 0 15px;\n  background: #e2f0fe;\n  box-shadow: 0px 0px 15px 0px rgba(0, 150, 255, 0.6);\n  border-radius: 10px;\n  border: 1px solid var(--fill-color);\n  font-size: 14px;\n  font-weight: 500;\n  color: var(--fill-color);\n  line-height: 20px;\n  opacity: var(--optaicy);\n  transition: all 0.1s ease;\n  box-sizing: border-box;\n  svg {\n    width: 24px;\n    height: 24px;\n    fill: var(--fill-color);\n    transition: inherit;\n  }\n"], ["\n  ", "\n  display: var(--is-show);\n  flex-direction: column;\n  align-items: center;\n  justify-content: space-between;\n  width: 150px;\n  height: 80px;\n  padding: 14px 0 15px;\n  background: #e2f0fe;\n  box-shadow: 0px 0px 15px 0px rgba(0, 150, 255, 0.6);\n  border-radius: 10px;\n  border: 1px solid var(--fill-color);\n  font-size: 14px;\n  font-weight: 500;\n  color: var(--fill-color);\n  line-height: 20px;\n  opacity: var(--optaicy);\n  transition: all 0.1s ease;\n  box-sizing: border-box;\n  svg {\n    width: 24px;\n    height: 24px;\n    fill: var(--fill-color);\n    transition: inherit;\n  }\n"])), function (props) { return css(templateObject_2 || (templateObject_2 = __makeTemplateObject(["\n    --optaicy: ", ";\n    --fill-color: ", ";\n    --is-show: ", ";\n  "], ["\n    --optaicy: ", ";\n    --fill-color: ", ";\n    --is-show: ", ";\n  "])), props.deleteAreaStatus === 'active' ? 0.9 : 1, props.deleteAreaStatus === 'active' ? '#ff6650' : '#0096ff', props.deleteAreaStatus === 'none' ? 'none' : 'flex'); });
-var EditorStage = function () {
+var EditorStage = forwardRef(function (_, ref) {
     var _a = useEditor(), width = _a.width, height = _a.height, activeTool = _a.activeTool, pencilConfig = _a.pencilConfig, textConfig = _a.textConfig, handleSelectTool = _a.handleSelectTool;
     var _b = useHistory(), image = _b.image, texts = _b.texts, lines = _b.lines, group = _b.group, clipRect = _b.clipRect, setLines = _b.setLines, setTexts = _b.setTexts, setImage = _b.setImage, setBlurs = _b.setBlurs;
     var _c = __read(useState([]), 2), currentBlurPos = _c[0], setBlurPos = _c[1];
@@ -1065,6 +1067,10 @@ var EditorStage = function () {
             (_a = trRef.current) === null || _a === void 0 ? void 0 : _a.nodes([]);
         }
     };
+    var handleRemoveTransfromer = function () {
+        var _a;
+        (_a = trRef.current) === null || _a === void 0 ? void 0 : _a.nodes([]);
+    };
     // TODO: ts
     var handleCut = function (clipInfo, rotation) {
         setImage(clipInfo, rotation);
@@ -1159,6 +1165,19 @@ var EditorStage = function () {
         var _a;
         deleteAreaRef.current = (_a = stage.current) === null || _a === void 0 ? void 0 : _a.findOne('#delete-area');
     }, []);
+    useImperativeHandle(ref, function () {
+        return {
+            exportImage: function () {
+                var _a;
+                return (_a = scaleGroup.current) === null || _a === void 0 ? void 0 : _a.toDataURL({
+                    x: clipRect.x * basicScaleRatio - dx,
+                    y: clipRect.y * basicScaleRatio - dy,
+                    width: clipRect.width * basicScaleRatio,
+                    height: clipRect.height * basicScaleRatio,
+                });
+            },
+        };
+    }, [clipRect]);
     return (jsxs(StageContainer, __assign({ style: {
             width: width,
             height: height,
@@ -1171,8 +1190,8 @@ var EditorStage = function () {
                                 x: width / 2 - 75,
                                 width: 150,
                                 height: 80,
-                            } }, { children: jsxs(DeleteArea, __assign({ deleteAreaStatus: deleteAreaStatus }, { children: [jsx(SvgIconDelete, {}), jsx("div", { children: "Drag here to delete" })] })) })), jsx(Transformer, { ref: trRef, rotateEnabled: false, resizeEnabled: false, anchorStroke: 'rgba(0,0,0,0)', anchorFill: 'rgba(0,0,0,0)', borderStroke: '#ccc' })] })) })), activeTool === 'Cut' && jsx(ClipStage, { onCutDone: handleCut }), activeTool === 'Words' && (jsx(WordInput, { onDone: handleTextAdd, onCancel: function () { return handleSelectTool(null); } })), deleteAreaStatus === 'none' && jsx(Toolbar, {})] })));
-};
+                            } }, { children: jsxs(DeleteArea, __assign({ deleteAreaStatus: deleteAreaStatus }, { children: [jsx(SvgIconDelete, {}), jsx("div", { children: "Drag here to delete" })] })) })), jsx(Transformer, { ref: trRef, rotateEnabled: false, resizeEnabled: false, anchorStroke: 'rgba(0,0,0,0)', anchorFill: 'rgba(0,0,0,0)', borderStroke: '#ccc' })] })) })), activeTool === 'Cut' && jsx(ClipStage, { onCutDone: handleCut }), activeTool === 'Words' && (jsx(WordInput, { onDone: handleTextAdd, onCancel: function () { return handleSelectTool(null); } })), deleteAreaStatus === 'none' && jsx(Toolbar, { onSelect: handleRemoveTransfromer })] })));
+});
 var templateObject_1, templateObject_2, templateObject_3;
 
 var HistoryProvider = function (_a) {
@@ -1280,9 +1299,9 @@ var HistoryProvider = function (_a) {
 
 // TODO: i18n
 // TODO: 配置项完善
-var Editor = function (_a) {
+var Editor = forwardRef(function (_a, ref) {
     var image = _a.image, _b = _a.width, width = _b === void 0 ? window.innerWidth : _b, _c = _a.height, height = _c === void 0 ? window.innerHeight : _c;
-    return (jsx(EditorProvider, __assign({ width: width, height: height }, { children: jsx(HistoryProvider, __assign({ image: image }, { children: jsx(EditorStage, {}) })) })));
-};
+    return (jsx(EditorProvider, __assign({ width: width, height: height }, { children: jsx(HistoryProvider, __assign({ image: image }, { children: jsx(EditorStage, { ref: ref }) })) })));
+});
 
 export { Editor as default };

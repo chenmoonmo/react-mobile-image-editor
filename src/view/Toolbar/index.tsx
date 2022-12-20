@@ -11,8 +11,8 @@ import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
 import { ToolUnion } from 'utils/constants';
 
-type ToolBarProps = {
-  // onAddText: (word: string) => unknown;
+type ToolBarPropsType = {
+  onSelect?: () => void;
 };
 
 const ToolsMap: { icon: ReactNode; name: ToolUnion }[] = [
@@ -94,7 +94,7 @@ const ColorSelector = styled.div`
   box-sizing: border-box;
 `;
 
-const Toolbar: ComponentType<ToolBarProps> = () => {
+const Toolbar: ComponentType<ToolBarPropsType> = ({ onSelect }) => {
   const { activeTool, pencilConfig, editorColors, handleSelectTool, changeColor } = useEditor();
   const { undo } = useHistory();
 
@@ -116,6 +116,7 @@ const Toolbar: ComponentType<ToolBarProps> = () => {
       default:
         handleSelectTool(tool);
     }
+    onSelect?.();
   };
 
   return (
