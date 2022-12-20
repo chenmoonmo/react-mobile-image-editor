@@ -1,18 +1,11 @@
 import styled from '@emotion/styled';
 import Konva from 'konva';
-import { ComponentType, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ComponentType, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Group, Rect, Stage, Layer, Image, Text, Line, Transformer } from 'react-konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
-import { ReactComponent as IconRotate } from 'assets/icons/icon-rotate.svg';
-import {
-  getCenter,
-  getDistance,
-  getImageSize,
-  getRotateDistance,
-  Point,
-  rotatePoint,
-} from 'utils/utils';
+import IconRotate from '../../assets/icons/icon-rotate.svg';
+import { getCenter, getDistance, getImageSize, getRotateDistance, Point, rotatePoint } from 'utils/utils';
 import { useAnchor } from 'utils/hooks/useAnchor';
 import Blurs from 'view/Blurs';
 
@@ -61,7 +54,6 @@ const InputActions = styled.div`
 const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
   const { image, texts, lines, group, clipRect } = useHistory();
   let { width, height, handleSelectTool } = useEditor();
-
   const drawAnchors = useAnchor();
 
   const scaleGroup = useRef<Konva.Group>(null);
