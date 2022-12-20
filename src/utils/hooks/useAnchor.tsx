@@ -1,7 +1,7 @@
 import Konva from 'konva';
 import { useEffect, useLayoutEffect, useRef } from 'react';
 
-const AnchorPositons = [
+const AnchorPositions = [
   'top-left',
   'top-center',
   'top-right',
@@ -12,34 +12,34 @@ const AnchorPositons = [
   'bottom-right',
 ] as const;
 
-type AnchorPositon = typeof AnchorPositons[number];
+type AnchorPosition = typeof AnchorPositions[number];
 
 export const useAnchor = () => {
   const anchorsRef = useRef(
-    {} as Record<AnchorPositon, ReturnType<typeof anchorShapeCanvasFactory>>
+    {} as Record<AnchorPosition, ReturnType<typeof anchorShapeCanvasFactory>>
   );
 
   const drawAnchors = (transformer: Konva.Transformer) => {
-    for (let positon of AnchorPositons) {
-      const rect = transformer.findOne(`.${positon}`) as Konva.Rect;
+    for (let position of AnchorPositions) {
+      const rect = transformer.findOne(`.${position}`) as Konva.Rect;
       rect?.fillPriority('pattern');
       rect?.fillPatternRepeat('no-repeat');
-      rect?.fillPatternImage(anchorsRef.current[positon]);
+      rect?.fillPatternImage(anchorsRef.current[position]);
       rect?.strokeEnabled(false);
     }
     transformer?.getLayer()!.batchDraw();
   };
 
   useLayoutEffect(() => {
-    for (let positon of AnchorPositons) {
-      anchorsRef.current[positon] = anchorShapeCanvasFactory(positon);
+    for (let position of AnchorPositions) {
+      anchorsRef.current[position] = anchorShapeCanvasFactory(position);
     }
   }, []);
 
   return drawAnchors;
 };
 
-const anchorShapeCanvasFactory = (position: AnchorPositon, color: string = '#0096FF') => {
+const anchorShapeCanvasFactory = (position: AnchorPosition, color: string = '#0096FF') => {
   const canvas = document.createElement('canvas');
   canvas.width = 24;
   canvas.height = 24;
