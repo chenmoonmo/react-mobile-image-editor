@@ -1,6 +1,14 @@
 import { Layer, Stage, Line, Image, Text, Group, Transformer } from 'react-konva';
 
-import React, { ComponentType, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  ComponentType,
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Konva from 'konva';
 import useEditor from 'utils/hooks/useEditor';
 import useHistory from 'utils/hooks/useHistory';
@@ -14,7 +22,9 @@ import { ReactComponent as IconDelete } from 'assets/icons/icon-delete.svg';
 import { css } from '@emotion/react';
 import { Html } from 'react-konva-utils';
 
-type EditorProps = {};
+type EditorRefType = {
+  exportImage: () => string;
+};
 
 type DeleteAreaStatus = 'none' | 'show' | 'active';
 
@@ -55,7 +65,7 @@ const DeleteArea = styled.div<{ deleteAreaStatus: DeleteAreaStatus }>`
   }
 `;
 
-const EditorStage: ComponentType<EditorProps> = () => {
+const EditorStage = forwardRef<EditorRefType>((_, ref) => {
   const { width, height, activeTool, pencilConfig, textConfig, handleSelectTool } = useEditor();
   const { image, texts, lines, group, clipRect, setLines, setTexts, setImage, setBlurs } =
     useHistory();
@@ -327,6 +337,22 @@ const EditorStage: ComponentType<EditorProps> = () => {
     deleteAreaRef.current = stage.current?.findOne('#delete-area') as Konva.Group;
   }, []);
 
+  useImperativeHandle(
+    ref,
+    () => {
+      return {
+        exportImage: () =>
+          scaleGroup.current?.toDataURL({
+            x: clipRect.x * basicScaleRatio - dx,
+            y: clipRect.y * basicScaleRatio - dy,
+            width: clipRect.width * basicScaleRatio,
+            height: clipRect.height * basicScaleRatio,
+          })!,
+      };
+    },
+    [clipRect]
+  );
+
   return (
     <StageContainer
       style={{
@@ -415,6 +441,6 @@ const EditorStage: ComponentType<EditorProps> = () => {
       {deleteAreaStatus === 'none' && <Toolbar onSelect={handleRemoveTransfromer} />}
     </StageContainer>
   );
-};
+});
 
 export default EditorStage;

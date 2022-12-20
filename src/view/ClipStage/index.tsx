@@ -108,8 +108,8 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
 
   const clipRectFill = useMemo(() => {
     const canvas = document.createElement('canvas');
-    canvas.width = clipInfo.width * basicScaleRatio ;
-    canvas.height = clipInfo.height * basicScaleRatio ;
+    canvas.width = clipInfo.width * basicScaleRatio;
+    canvas.height = clipInfo.height * basicScaleRatio;
     const ctx = canvas.getContext('2d')!;
     ctx.strokeStyle = '#0096FF';
     ctx.lineWidth = 1;
@@ -131,7 +131,7 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
     ctx.lineTo((canvas.width / 3) * 2, height);
     ctx.stroke();
     return canvas as unknown as HTMLImageElement;
-  }, [clipInfo.width, clipInfo.height,rotation]);
+  }, [clipInfo.width, clipInfo.height, rotation]);
 
   const handleTransformEnd = () => {
     const node = reRef.current!;
@@ -375,8 +375,9 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
               y={clipInfo.y}
               width={clipInfo.width}
               height={clipInfo.height}
-              fillPatternImage={clipRectFill}
               fillPriority='pattern'
+              fillPatternImage={clipRectFill}
+              fillPatternRepeat='no-repeat'
               fillPatternScale={{
                 x: 1 / basicScaleRatio,
                 y: 1 / basicScaleRatio,
