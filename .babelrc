@@ -1,0 +1,24 @@
+{
+    "presets": [
+        ["@babel/preset-env", {
+            "loose": true,
+            "modules": false,
+            "targets": {
+                "node": "current"
+            }
+        }],
+        "react-app"
+    ],
+    "plugins": [
+        ["@babel/proposal-object-rest-spread", {
+            "loose": true
+        }],
+        "@babel/transform-object-assign"
+    ],
+    "ignore": [
+        "dist/**",
+        "webpack.config.js",
+        "webpack.config.dev.js",
+        "bundle.js"
+    ]
+}

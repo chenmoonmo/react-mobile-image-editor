@@ -7,7 +7,7 @@ import babel from '@rollup/plugin-babel';
 import path from 'path';
 import svgr from '@svgr/rollup';
 
-export default {
+const config = {
   input: `example/src/index.tsx`,
   output: {
     file: 'example/assets/bundle.js',
@@ -40,3 +40,5 @@ export default {
     replace({ 'process.env.NODE_ENV': JSON.stringify('development') }),
   ],
 };
+
+export default config;

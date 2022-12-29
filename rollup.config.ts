@@ -8,8 +8,7 @@ import tsTreeshaking from 'rollup-plugin-ts-treeshaking';
 
 import pkg from './package.json';
 
-// eslint-disable-next-line import/no-anonymous-default-export
-export default [
+const config =  [
   {
     input: `src/index.ts`,
     output: [
@@ -38,3 +37,5 @@ export default [
     plugins: [dts()],
   },
 ];
+
+export default config;

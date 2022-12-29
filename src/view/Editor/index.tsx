@@ -11,6 +11,9 @@ export type EditorPropsType = {
   image: string;
   width?: number;
   height?: number;
+  ref?: {
+    exportImage: () => string;
+  };
 };
 // TODO: i18n
 // TODO: 配置项完善
