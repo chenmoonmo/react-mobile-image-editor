@@ -9,6 +9,9 @@ import dts from "vite-plugin-dts";
 import { visualizer } from "rollup-plugin-visualizer";
 
 import path from "path";
+import { readFile } from "fs";
+
+import pkg from "./package.json";
 
 function resolve(str: string) {
   return path.resolve(__dirname, str);
@@ -46,7 +49,7 @@ export default defineConfig({
       fileName: "react-mobile-image-editor",
     },
     rollupOptions: {
-      external: ["react", "react-dom","konva","react-konva"],
+      external: Object.keys(pkg.peerDependencies || {}),
       output: {
         globals: {
           react: "react",
