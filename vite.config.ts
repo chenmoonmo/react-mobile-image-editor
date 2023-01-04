@@ -1,8 +1,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import typescript from "@rollup/plugin-typescript";
 import svgr from "vite-plugin-svgr";
-import tsTreeshaking from "rollup-plugin-ts-treeshaking";
+
+import alias from "@rollup/plugin-alias";
+
+import dts from "vite-plugin-dts";
+
+import { visualizer } from "rollup-plugin-visualizer";
 
 import path from "path";
 
@@ -13,6 +17,7 @@ function resolve(str: string) {
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
+    alias(),
     react(),
     svgr({
       exportAsDefault: true,
@@ -20,36 +25,28 @@ export default defineConfig({
         icon: true,
       },
     }),
-    typescript({
-      target: "es5",
-      rootDir: resolve("package/"),
-      declaration: true,
-      declarationDir: resolve("lib"),
-      exclude: resolve("node_modules/**"),
-      allowSyntheticDefaultImports: true,
-      include: [resolve("custom.d.ts"), "**/*.ts", "**/*.tsx"],
-    }),
-    tsTreeshaking(),
+    dts(),
+    visualizer(),
   ],
+  resolve: {
+    alias: {
+      "@": resolve("package/"),
+    },
+  },
+  optimizeDeps: {
+    exclude: ["react-reconciler"],
+  },
   build: {
     outDir: "lib",
     cssTarget: "chrome61",
     lib: {
       entry: resolve("package/index.ts"),
       name: "react-mobile-image-editor",
+      formats: ["es", "umd"],
       fileName: "react-mobile-image-editor",
     },
     rollupOptions: {
-      external: [
-        "react",
-        "react-dom",
-        // "@emotion/react",
-        // "@emotion/styled",
-        // "konva",
-        // "react-konva-utils",
-        // "stateshot",
-        // "use-image",
-      ],
+      external: ["react", "react-dom","konva","react-konva"],
       output: {
         globals: {
           react: "react",
