@@ -16,7 +16,6 @@
 import Editor, { useExport } from "react-mobile-image-editor";
 
 import image from "./assets/chibubao.png";
-import "./index.css";
 
 const App = () => {
   const editorRef = useExport();
