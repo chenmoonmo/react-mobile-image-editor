@@ -11,13 +11,11 @@ const App = () => {
   };
 
   return (
-    <div>
-      <Editor
-        ref={editorRef}
-        image={image}
-        toolbarBottom={<button onClick={handleDownload}>Download</button>}
-      />
-    </div>
+    <Editor
+      ref={editorRef}
+      image={image}
+      toolbarBottom={<button onClick={handleDownload}>Download</button>}
+    />
   );
 };
 
