@@ -419,7 +419,9 @@ const ClipStage: ComponentType<ClipStageProps> = ({ onCutDone }) => {
       </Stage>
       <InputActions>
         <div onClick={hanldeCutCancel}>Cancel</div>
-        <IconRotate width={24} height={24} onClick={hanldeRotate} />
+        <div onClick={hanldeRotate}>
+          <IconRotate />
+        </div>
         <div onClick={handleCutDown}>Done</div>
       </InputActions>
     </ClipContainer>
