@@ -1,10 +1,10 @@
-import React, { useRef } from "react";
-import Editor from "@/Editor";
+import Editor, { useExport } from "@/Editor";
 
 import image from "./assets/chibubao.png";
+import "./index.css";
 
 const App = () => {
-  const editorRef = useRef(null as any);
+  const editorRef = useExport();
 
   const handleDownload = () => {
     console.log(editorRef.current.exportImage());
@@ -12,8 +12,11 @@ const App = () => {
 
   return (
     <div>
-      <Editor ref={editorRef} image={image} width={400} height={600} />
-      <button onClick={handleDownload}>Download</button>
+      <Editor
+        ref={editorRef}
+        image={image}
+        toolbarBottom={<button onClick={handleDownload}>Download</button>}
+      />
     </div>
   );
 };
