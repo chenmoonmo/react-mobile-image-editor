@@ -12,6 +12,7 @@ import { useHistory } from "@/providers/HistoryProvider";
 import { useEditor } from "@/providers/EditorProvider";
 
 type ToolBarPropsType = {
+  children?: ReactNode;
   onSelect?: () => void;
 };
 
@@ -98,7 +99,7 @@ const ColorSelector = styled.div`
   box-sizing: border-box;
 `;
 
-const Toolbar: ComponentType<ToolBarPropsType> = ({ onSelect }) => {
+const Toolbar: ComponentType<ToolBarPropsType> = ({ children,onSelect }) => {
   const {
     activeTool,
     pencilConfig,
@@ -156,6 +157,7 @@ const Toolbar: ComponentType<ToolBarPropsType> = ({ onSelect }) => {
           ))}
         </ToolbarContainer>
       )}
+      {children}
     </ToolContainer>
   );
 };

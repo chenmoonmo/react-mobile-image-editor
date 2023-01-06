@@ -1,14 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
-
 import alias from "@rollup/plugin-alias";
-
 import dts from "vite-plugin-dts";
-
 import { visualizer } from "rollup-plugin-visualizer";
 
 import path from "path";
+
+import pkg from "./package.json";
 
 function resolve(str: string) {
   return path.resolve(__dirname, str);
@@ -33,9 +32,6 @@ export default defineConfig({
       "@": resolve("package/"),
     },
   },
-  optimizeDeps: {
-    exclude: ["react-reconciler"],
-  },
   build: {
     outDir: "lib",
     cssTarget: "chrome61",
@@ -46,7 +42,7 @@ export default defineConfig({
       fileName: "react-mobile-image-editor",
     },
     rollupOptions: {
-      external: ["react", "react-dom","konva","react-konva"],
+      external: Object.keys(pkg.peerDependencies || {}),
       output: {
         globals: {
           react: "react",
