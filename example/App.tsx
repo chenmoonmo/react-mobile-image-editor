@@ -1,7 +1,7 @@
+/// <reference types="vite/client" />
 import Editor, { useExport } from "@/Editor";
 
 import image from "./assets/chibubao.png";
-import "./index.css";
 
 const App = () => {
   const editorRef = useExport();
