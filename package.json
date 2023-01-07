@@ -12,6 +12,13 @@
       "require": "./lib/react-mobile-image-editor.cjs"
     }
   },
+  "keywords": [
+    "react",
+    "component",
+    "mobile",
+    "image-editor",
+    "crop"
+  ],
   "main": "./lib/react-mobile-image-editor.umd.cjs",
   "module": "./lib/react-mobile-image-editor.js",
   "typings": "./lib/index.d.ts",
