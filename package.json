@@ -16,9 +16,15 @@
     "react",
     "component",
     "mobile",
-    "image-editor",
-    "crop"
+    "image editor",
+    "image crop",
+    "photo editor",
+    "react mobile image editor"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chenmoonmo/react-mobile-image-editor"
+  },
   "main": "./lib/react-mobile-image-editor.umd.cjs",
   "module": "./lib/react-mobile-image-editor.js",
   "typings": "./lib/index.d.ts",
