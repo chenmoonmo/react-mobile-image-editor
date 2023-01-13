@@ -4,7 +4,8 @@
   "type": "module",
   "files": [
     "lib",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "exports": {
     ".": {
