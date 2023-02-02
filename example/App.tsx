@@ -1,22 +1,10 @@
 /// <reference types="vite/client" />
-import Editor, { useExport } from "@/Editor";
+import Editor from "@/Editor";
 
 import image from "./assets/chibubao.png";
 
 const App = () => {
-  const editorRef = useExport();
-
-  const handleDownload = () => {
-    console.log(editorRef.current.exportImage());
-  };
-
-  return (
-    <Editor
-      ref={editorRef}
-      image={image}
-      toolbarBottom={<button onClick={handleDownload}>Download</button>}
-    />
-  );
+  return <Editor image={image}/>;
 };
 
 export default App;

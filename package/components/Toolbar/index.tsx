@@ -14,6 +14,7 @@ import { useEditor } from "@/providers/EditorProvider";
 type ToolBarPropsType = {
   children?: ReactNode;
   onSelect?: () => void;
+  onDownload?: () => void;
 };
 
 const ToolsMap: { icon: ReactNode; name: ToolUnion }[] = [
@@ -74,6 +75,18 @@ const ToolbarItem = React.memo(styled.div<{ isActive: boolean }>`
     `}
 `);
 
+const DownloadButton = styled.button`
+  padding: 12px 18px;
+  font-size: 16px;
+  font-weight: 600;
+  align-self: center;
+  background: #0096ff;
+  outline: none;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+`;
+
 const ColorItem = styled.div<{ color: string; currentColor: string }>`
   width: 16px;
   height: 16px;
@@ -99,7 +112,11 @@ const ColorSelector = styled.div`
   box-sizing: border-box;
 `;
 
-const Toolbar: ComponentType<ToolBarPropsType> = ({ children,onSelect }) => {
+const Toolbar: ComponentType<ToolBarPropsType> = ({
+  children,
+  onSelect,
+  onDownload,
+}) => {
   const {
     activeTool,
     pencilConfig,
@@ -152,9 +169,10 @@ const Toolbar: ComponentType<ToolBarPropsType> = ({ children,onSelect }) => {
               onClick={() => handleToolSelect(tool.name)}
               isActive={tool.name === activeTool}>
               {tool.icon}
-              <span>{tool.name}</span>
+              {/* <span>{tool.name}</span> */}
             </ToolbarItem>
           ))}
+          <DownloadButton onClick={onDownload}>Done</DownloadButton>
         </ToolbarContainer>
       )}
       {children}
